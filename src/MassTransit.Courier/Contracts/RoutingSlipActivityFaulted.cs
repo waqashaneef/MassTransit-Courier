@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -24,9 +24,19 @@ namespace MassTransit.Courier.Contracts
         Guid TrackingNumber { get; }
 
         /// <summary>
+        /// The tracking number of this activity execution
+        /// </summary>
+        Guid ActivityTrackingNumber { get; }
+
+        /// <summary>
         /// The date/time when the routing slip compensation was finished
         /// </summary>
         DateTime Timestamp { get; }
+
+        /// <summary>
+        /// The duration of the activity execution
+        /// </summary>
+        TimeSpan Duration { get; }
 
         /// <summary>
         /// The name of the activity that completed
@@ -34,9 +44,9 @@ namespace MassTransit.Courier.Contracts
         string ActivityName { get; }
 
         /// <summary>
-        /// The tracking number of this activity execution
+        /// The host that executed the activity
         /// </summary>
-        Guid ActivityTrackingNumber { get; }
+        Host Host { get; }
 
         /// <summary>
         /// The exception information from the faulting activity

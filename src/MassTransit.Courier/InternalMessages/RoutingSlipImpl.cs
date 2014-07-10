@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -21,21 +21,25 @@ namespace MassTransit.Courier.InternalMessages
     class RoutingSlipImpl :
         RoutingSlip
     {
-        public RoutingSlipImpl(Guid trackingNumber, IEnumerable<Activity> activities,
-            IEnumerable<ActivityLog> activityLogs, IDictionary<string, object> variables,
-            IEnumerable<ActivityException> exceptions)
+        public RoutingSlipImpl(Guid trackingNumber, DateTime createTimestamp, IEnumerable<Activity> activities,
+            IEnumerable<ActivityLog> activityLogs, IEnumerable<CompensateLog> compensateLogs,
+            IEnumerable<ActivityException> exceptions, IDictionary<string, object> variables)
         {
             TrackingNumber = trackingNumber;
+            CreateTimestamp = createTimestamp;
             Itinerary = activities.ToList();
             ActivityLogs = activityLogs.ToList();
+            CompensateLogs = compensateLogs.ToList();
             Variables = variables ?? new Dictionary<string, object>();
             ActivityExceptions = exceptions.ToList();
         }
 
 
-        public IList<Activity> Itinerary { get; private set; }
         public Guid TrackingNumber { get; private set; }
+        public DateTime CreateTimestamp { get; private set; }
+        public IList<Activity> Itinerary { get; private set; }
         public IList<ActivityLog> ActivityLogs { get; private set; }
+        public IList<CompensateLog> CompensateLogs { get; private set; }
         public IDictionary<string, object> Variables { get; private set; }
         public IList<ActivityException> ActivityExceptions { get; private set; }
     }

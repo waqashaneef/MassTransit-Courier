@@ -10,28 +10,29 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.Courier.InternalMessages
+namespace MassTransit.Courier.Hosts
 {
-    using System;
     using System.Collections.Generic;
     using Contracts;
 
 
-    class RoutingSlipCompletedMessage :
-        RoutingSlipCompleted
+    class CompensatedWithVariablesCompensationResult<TLog> :
+        CompensatedCompensationResult<TLog>
+        where TLog : class
     {
-        public RoutingSlipCompletedMessage(Guid trackingNumber, DateTime timestamp, TimeSpan duration, IDictionary<string, object> variables)
-        {
-            Duration = duration;
-            Timestamp = timestamp;
+        readonly IDictionary<string, object> _variables;
 
-            TrackingNumber = trackingNumber;
-            Variables = variables;
+        public CompensatedWithVariablesCompensationResult(Compensation<TLog> compensation, CompensateLog compensateLog,
+            RoutingSlip routingSlip,
+            IDictionary<string, object> variables)
+            : base(compensation, compensateLog, routingSlip)
+        {
+            _variables = variables;
         }
 
-        public Guid TrackingNumber { get; private set; }
-        public DateTime Timestamp { get; private set; }
-        public TimeSpan Duration { get; private set; }
-        public IDictionary<string, object> Variables { get; private set; }
+        protected override void Build(RoutingSlipBuilder builder)
+        {
+            builder.SetVariables(_variables);
+        }
     }
 }

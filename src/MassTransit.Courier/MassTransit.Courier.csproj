@@ -10,10 +10,11 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MassTransit.Courier</RootNamespace>
     <AssemblyName>MassTransit.Courier</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -24,6 +25,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>3001,3002,3003</NoWarn>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -33,6 +35,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>3001,3002,3003</NoWarn>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Magnum, Version=2.1.2.0, Culture=neutral, PublicKeyToken=b800c4cfcdeea87b, processorArchitecture=MSIL">
@@ -44,8 +47,7 @@
       <HintPath>..\packages\MassTransit.2.9.5\lib\net40\MassTransit.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -55,29 +57,39 @@
   <ItemGroup>
     <Compile Include="ActivityFactoryExtensions.cs" />
     <Compile Include="Contracts\ActivityException.cs" />
+    <Compile Include="Contracts\ActivityHost.cs" />
+    <Compile Include="Contracts\CompensateLog.cs" />
     <Compile Include="Contracts\ExceptionInfo.cs" />
     <Compile Include="Contracts\RoutingSlipActivityCompensated.cs" />
     <Compile Include="Contracts\RoutingSlipActivityCompensationFailed.cs" />
     <Compile Include="Contracts\RoutingSlipActivityCompleted.cs" />
     <Compile Include="Contracts\RoutingSlipActivityFaulted.cs" />
     <Compile Include="Contracts\RoutingSlipCompensationFailed.cs" />
-    <Compile Include="Hosts\CompensateResult.cs" />
+    <Compile Include="Hosts\CompensatedCompensationResult.cs" />
+    <Compile Include="Hosts\CompensatedWithVariablesCompensationResult.cs" />
     <Compile Include="Hosts\DefaultConstructorActivityFactory.cs" />
     <Compile Include="Hosts\DefaultConstructorCompensateActivityFactory.cs" />
+    <Compile Include="Hosts\CompletedExecutionResult.cs" />
     <Compile Include="Hosts\FactoryMethodActivityFactory.cs" />
     <Compile Include="Hosts\FactoryMethodCompensateActivityFactory.cs" />
     <Compile Include="Hosts\FactoryMethodExecuteActivityFactory.cs" />
-    <Compile Include="Hosts\FaultResult.cs" />
+    <Compile Include="Hosts\FailedCompensationResult.cs" />
+    <Compile Include="Hosts\FaultedExecutionResult.cs" />
     <Compile Include="Hosts\GenericActivityFactory.cs" />
-    <Compile Include="Hosts\NextActivityResult.cs" />
+    <Compile Include="Hosts\NextActivityExecutionResult.cs" />
+    <Compile Include="Hosts\NextActivityExecutionResultWithVariables.cs" />
     <Compile Include="Hosts\RanToCompletionResult.cs" />
     <Compile Include="ActivityFactory.cs" />
     <Compile Include="CompensateActivityFactory.cs" />
     <Compile Include="ExecuteActivityFactory.cs" />
+    <Compile Include="Hosts\ReviseItineraryExecutionResult.cs" />
+    <Compile Include="Hosts\ReviseItineraryWithVariablesExecutionResult.cs" />
     <Compile Include="InternalMessages\ActivityExceptionImpl.cs" />
     <Compile Include="InternalMessages\ActivityImpl.cs" />
     <Compile Include="InternalMessages\ActivityLogImpl.cs" />
+    <Compile Include="InternalMessages\CompensateLogImpl.cs" />
     <Compile Include="InternalMessages\ExceptionInfoImpl.cs" />
+    <Compile Include="InternalMessages\HostImpl.cs" />
     <Compile Include="InternalMessages\RoutingSlipImpl.cs" />
     <Compile Include="Internals\**\*.cs" />
     <Compile Include="ItineraryBuilder.cs" />

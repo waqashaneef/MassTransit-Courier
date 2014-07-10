@@ -24,19 +24,34 @@ namespace MassTransit.Courier.Contracts
         Guid TrackingNumber { get; }
 
         /// <summary>
-        /// The date/time when the routing slip compensation was finished
-        /// </summary>
-        DateTime Timestamp { get; }
-
-        /// <summary>
         /// The tracking number for completion of the activity
         /// </summary>
         Guid ActivityTrackingNumber { get; }
 
         /// <summary>
+        /// The date/time when the routing slip compensation was finished
+        /// </summary>
+        DateTime Timestamp { get; }
+
+        /// <summary>
+        /// The duration of the activity execution
+        /// </summary>
+        TimeSpan Duration { get; }
+
+        /// <summary>
+        /// The name of the activity that completed
+        /// </summary>
+        string ActivityName { get; }
+
+        /// <summary>
+        /// The host that executed the activity
+        /// </summary>
+        Host Host { get; }
+
+        /// <summary>
         /// The results of the activity saved for compensation
         /// </summary>
-        IDictionary<string, object> Results { get; }
+        IDictionary<string, object> Data { get; }
 
         /// <summary>
         /// The variables that were present once the routing slip completed, can be used
@@ -45,9 +60,5 @@ namespace MassTransit.Courier.Contracts
         /// </summary>
         IDictionary<string, object> Variables { get; }
 
-        /// <summary>
-        /// The name of the activity that completed
-        /// </summary>
-        string ActivityName { get; }
     }
 }

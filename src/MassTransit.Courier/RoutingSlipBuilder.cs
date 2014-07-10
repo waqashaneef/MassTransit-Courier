@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -16,7 +16,6 @@ namespace MassTransit.Courier
     using System.Collections.Generic;
     using System.Linq;
     using Contracts;
-    using Hosts;
     using InternalMessages;
     using Magnum.Reflection;
 
@@ -29,9 +28,11 @@ namespace MassTransit.Courier
         ItineraryBuilder
     {
         public static readonly IDictionary<string, object> NoArguments = new Dictionary<string, object>();
-        readonly IList<ActivityException> _activityExceptions;
 
+        readonly IList<ActivityException> _activityExceptions;
         readonly IList<ActivityLog> _activityLogs;
+        readonly IList<CompensateLog> _compensateLogs;
+        readonly DateTime _createTimestamp;
         readonly IList<Activity> _itinerary;
         readonly List<Activity> _sourceItinerary;
         readonly Guid _trackingNumber;
@@ -40,23 +41,45 @@ namespace MassTransit.Courier
         public RoutingSlipBuilder(Guid trackingNumber)
         {
             _trackingNumber = trackingNumber;
+            _createTimestamp = DateTime.UtcNow;
+
             _itinerary = new List<Activity>();
             _sourceItinerary = new List<Activity>();
             _activityLogs = new List<ActivityLog>();
-            _variables = new Dictionary<string, object>();
             _activityExceptions = new List<ActivityException>();
+            _compensateLogs = new List<CompensateLog>();
+            _variables = new Dictionary<string, object>();
         }
 
-        public RoutingSlipBuilder(Guid trackingNumber, IEnumerable<Activity> activities,
-            IEnumerable<ActivityLog> activityLogs, IDictionary<string, object> variables,
-            IEnumerable<ActivityException> activityExceptions)
+        public RoutingSlipBuilder(RoutingSlip routingSlip, Func<IEnumerable<Activity>, IEnumerable<Activity>> activitySelector)
         {
-            _trackingNumber = trackingNumber;
-            _itinerary = activities.ToList();
+            _trackingNumber = routingSlip.TrackingNumber;
+            _createTimestamp = routingSlip.CreateTimestamp;
+            _itinerary = new List<Activity>(activitySelector(routingSlip.Itinerary));
+            _activityLogs = new List<ActivityLog>(routingSlip.ActivityLogs);
+            _compensateLogs = new List<CompensateLog>(routingSlip.CompensateLogs);
+            _activityExceptions = new List<ActivityException>(routingSlip.ActivityExceptions);
+            _variables = new Dictionary<string, object>(routingSlip.Variables);
+
             _sourceItinerary = new List<Activity>();
-            _activityLogs = activityLogs.ToList();
-            _variables = variables ?? new Dictionary<string, object>();
-            _activityExceptions = activityExceptions.ToList();
+        }
+
+        public RoutingSlipBuilder(RoutingSlip routingSlip, Func<IEnumerable<CompensateLog>, IEnumerable<CompensateLog>> compensateLogSelector)
+        {
+            _trackingNumber = routingSlip.TrackingNumber;
+            _createTimestamp = routingSlip.CreateTimestamp;
+            _itinerary = new List<Activity>(routingSlip.Itinerary);
+            _activityLogs = new List<ActivityLog>(routingSlip.ActivityLogs);
+            _compensateLogs = new List<CompensateLog>(compensateLogSelector(routingSlip.CompensateLogs));
+            _activityExceptions = new List<ActivityException>(routingSlip.ActivityExceptions);
+            _variables = new Dictionary<string, object>(routingSlip.Variables);
+
+            _sourceItinerary = new List<Activity>();
+        }
+
+        public IDictionary<string, object> Variables
+        {
+            get { return _variables; }
         }
 
         /// <summary>
@@ -103,11 +126,25 @@ namespace MassTransit.Courier
             _itinerary.Add(activity);
         }
 
+        /// <summary>
+        /// Add a string value to the routing slip
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
         public void AddVariable(string key, string value)
         {
             _variables.Add(key, value);
         }
 
+        /// <summary>
+        /// Add an object variable to the routing slip
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        public void AddVariable(string key, object value)
+        {
+            _variables.Add(key, value);
+        }
 
         /// <summary>
         /// Sets the value of any existing variables to the value in the anonymous object,
@@ -120,13 +157,13 @@ namespace MassTransit.Courier
         {
             IDictionary<string, object> dictionary = GetObjectAsDictionary(values);
 
-            ApplyDictionaryToVariables(dictionary);
+            SetVariablesFromDictionary(dictionary);
         }
 
 
         public void SetVariables(IEnumerable<KeyValuePair<string, object>> values)
         {
-            ApplyDictionaryToVariables(values);
+            SetVariablesFromDictionary(values);
         }
 
         public int AddSourceItinerary()
@@ -146,7 +183,8 @@ namespace MassTransit.Courier
         /// <returns>The RoutingSlip</returns>
         public RoutingSlip Build()
         {
-            return new RoutingSlipImpl(TrackingNumber, _itinerary, _activityLogs, _variables, _activityExceptions);
+            return new RoutingSlipImpl(_trackingNumber, _createTimestamp, _itinerary, _activityLogs, _compensateLogs, _activityExceptions,
+                _variables);
         }
 
         /// <summary>
@@ -159,44 +197,79 @@ namespace MassTransit.Courier
             _sourceItinerary.AddRange(sourceItinerary);
         }
 
-        public ActivityLog AddActivityLog(string name, Guid activityTrackingNumber, Uri compensateAddress,
-            object logObject)
+        public void AddActivityLog(Host host, string name, Guid activityTrackingNumber, DateTime timestamp, TimeSpan duration)
         {
-            IDictionary<string, object> resultsDictionary = GetObjectAsDictionary(logObject);
-
-            return AddActivityLog(name, activityTrackingNumber, compensateAddress, resultsDictionary);
+            _activityLogs.Add(new ActivityLogImpl(host, activityTrackingNumber, name, timestamp, duration));
         }
 
-        public ActivityLog AddActivityLog(string name, Guid activityTrackingNumber, Uri compensateAddress,
-            IDictionary<string, object> results)
+        public void AddCompensateLog(Guid activityTrackingNumber, Uri compensateAddress, object logObject)
         {
-            ActivityLog activityLog = new ActivityLogImpl(activityTrackingNumber, name, compensateAddress, results);
-            _activityLogs.Add(activityLog);
+            IDictionary<string, object> data = GetObjectAsDictionary(logObject);
 
-            return activityLog;
+            _compensateLogs.Add(new CompensateLogImpl(activityTrackingNumber, compensateAddress, data));
+        }
+
+        public void AddCompensateLog(Guid activityTrackingNumber, Uri compensateAddress, IDictionary<string, object> data)
+        {
+            _compensateLogs.Add(new CompensateLogImpl(activityTrackingNumber, compensateAddress, data));
         }
 
         /// <summary>
         /// Adds an activity exception to the routing slip
         /// </summary>
+        /// <param name="host"></param>
         /// <param name="name">The name of the faulted activity</param>
-        /// <param name="hostAddress">The host address where the faulted activity executed</param>
-        /// <param name="timestamp">The timestamp of the exception</param>
-        /// <param name="exception">The exception thrown by the activity</param>
         /// <param name="activityTrackingNumber">The activity tracking number</param>
-        /// <returns>The ActivityExceptionInfo that was added</returns>
-        public ActivityException AddActivityException(string name, Uri hostAddress, Guid activityTrackingNumber,
-            DateTime timestamp, Exception exception)
+        /// <param name="timestamp">The timestamp of the exception</param>
+        /// <param name="duration"></param>
+        /// <param name="exception">The exception thrown by the activity</param>
+        public void AddActivityException(Host host, string name, Guid activityTrackingNumber, DateTime timestamp, TimeSpan duration,
+            Exception exception)
         {
-            ActivityException activityException = new ActivityExceptionImpl(name, hostAddress, activityTrackingNumber,
-                timestamp, exception);
-            _activityExceptions.Add(activityException);
+            if (name == null)
+                throw new ArgumentNullException("name");
+            if (exception == null)
+                throw new ArgumentNullException("exception");
 
-            return activityException;
+            var exceptionInfo = new ExceptionInfoImpl(exception);
+
+            ActivityException activityException = new ActivityExceptionImpl(name, host, activityTrackingNumber, timestamp, duration,
+                exceptionInfo);
+            _activityExceptions.Add(activityException);
+        }
+
+        /// <summary>
+        /// Adds an activity exception to the routing slip
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="name">The name of the faulted activity</param>
+        /// <param name="activityTrackingNumber">The activity tracking number</param>
+        /// <param name="timestamp">The timestamp of the exception</param>
+        /// <param name="duration"></param>
+        /// <param name="exceptionInfo"></param>
+        public void AddActivityException(Host host, string name, Guid activityTrackingNumber, DateTime timestamp, TimeSpan duration,
+            ExceptionInfo exceptionInfo)
+        {
+            if (name == null)
+                throw new ArgumentNullException("name");
+            if (exceptionInfo == null)
+                throw new ArgumentNullException("exceptionInfo");
+
+            ActivityException activityException = new ActivityExceptionImpl(name, host, activityTrackingNumber, timestamp, duration,
+                exceptionInfo);
+            _activityExceptions.Add(activityException);
+        }
+
+        public void AddActivityException(ActivityException activityException)
+        {
+            if (activityException == null)
+                throw new ArgumentNullException("activityException");
+
+            _activityExceptions.Add(activityException);
         }
 
 
-        void ApplyDictionaryToVariables(IEnumerable<KeyValuePair<string, object>> logValues)
+        void SetVariablesFromDictionary(IEnumerable<KeyValuePair<string, object>> logValues)
         {
             foreach (var logValue in logValues)
             {
@@ -209,8 +282,11 @@ namespace MassTransit.Courier
         }
 
 
-        IDictionary<string, object> GetObjectAsDictionary(object values)
+        public static IDictionary<string, object> GetObjectAsDictionary(object values)
         {
+            if (values == null)
+                return new Dictionary<string, object>();
+
             IDictionary<string, object> dictionary = Statics.Converter.Convert(values);
 
             return dictionary.ToDictionary(x => x.Key, x => x.Value);

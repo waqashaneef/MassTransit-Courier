@@ -34,6 +34,7 @@ namespace MassTransit.Courier.MongoDbIntegration.Tests.Events
 
         public Guid TrackingNumber { get; private set; }
         public DateTime Timestamp { get; private set; }
+        public TimeSpan Duration { get; private set; }
         public IDictionary<string, object> Variables { get; private set; }
     }
 }

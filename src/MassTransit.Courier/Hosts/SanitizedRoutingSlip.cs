@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -28,12 +28,12 @@ namespace MassTransit.Courier.Hosts
     public class SanitizedRoutingSlip :
         RoutingSlip
     {
-        readonly IConsumeContext<RoutingSlip> _jsonContext;
         readonly JToken _messageToken;
         readonly JToken _variablesToken;
 
         public SanitizedRoutingSlip(IConsumeContext<RoutingSlip> context)
         {
+            IConsumeContext<RoutingSlip> jsonContext;
             using (var ms = new MemoryStream())
             {
                 context.BaseContext.CopyBodyTo(ms);
@@ -42,21 +42,21 @@ namespace MassTransit.Courier.Hosts
 
                 if (string.Compare(context.ContentType, "application/vnd.masstransit+json",
                     StringComparison.OrdinalIgnoreCase) == 0)
-                    _jsonContext = TranslateJsonBody(receiveContext);
+                    jsonContext = TranslateJsonBody(receiveContext);
                 else if (string.Compare(context.ContentType, "application/vnd.masstransit+xml",
                     StringComparison.OrdinalIgnoreCase) == 0)
-                    _jsonContext = TranslateXmlBody(receiveContext);
+                    jsonContext = TranslateXmlBody(receiveContext);
                 else
                     throw new InvalidOperationException("Only JSON and XML messages can be scheduled");
             }
 
             IConsumeContext<JToken> messageTokenContext;
-            if (!_jsonContext.TryGetContext(out messageTokenContext))
+            if (!jsonContext.TryGetContext(out messageTokenContext))
                 throw new InvalidOperationException("Unable to retrieve JSON token");
 
             _messageToken = messageTokenContext.Message;
 
-            RoutingSlip routingSlip = _jsonContext.Message;
+            RoutingSlip routingSlip = jsonContext.Message;
 
             TrackingNumber = routingSlip.TrackingNumber;
 
@@ -72,6 +72,10 @@ namespace MassTransit.Courier.Hosts
                 .Select(x => (ActivityLog)new SanitizedActivityLog(x))
                 .ToList();
 
+            CompensateLogs = (routingSlip.CompensateLogs ?? new List<CompensateLog>())
+                .Select(x => (CompensateLog)new SanitizedCompensateLog(x))
+                .ToList();
+
             ActivityExceptions = (routingSlip.ActivityExceptions ?? new List<ActivityException>())
                 .Select(x => (ActivityException)new SanitizedActivityException(x))
                 .ToList();
@@ -79,8 +83,14 @@ namespace MassTransit.Courier.Hosts
 
 
         public Guid TrackingNumber { get; private set; }
+
+        public DateTime CreateTimestamp { get; private set; }
+
         public IList<Activity> Itinerary { get; private set; }
         public IList<ActivityLog> ActivityLogs { get; private set; }
+
+        public IList<CompensateLog> CompensateLogs { get; private set; }
+
         public IDictionary<string, object> Variables { get; private set; }
         public IList<ActivityException> ActivityExceptions { get; private set; }
 
@@ -91,7 +101,8 @@ namespace MassTransit.Courier.Hosts
 
             JToken activityToken = itineraryToken is JArray ? itineraryToken[0] : itineraryToken;
 
-            JToken token = activityToken["arguments"].Merge(_variablesToken);
+            // give arguments priority over variables, stupid
+            JToken token = _variablesToken.Merge(activityToken["arguments"]);
             if (token.Type == JTokenType.Null)
                 token = new JObject();
 
@@ -101,9 +112,9 @@ namespace MassTransit.Courier.Hosts
             }
         }
 
-        public T GetActivityLog<T>()
+        public T GetCompensateLogData<T>()
         {
-            JToken activityLogsToken = _messageToken["activityLogs"];
+            JToken activityLogsToken = _messageToken["compensateLogs"];
 
             JToken activityLogToken;
             if (activityLogsToken is JArray)
@@ -114,7 +125,8 @@ namespace MassTransit.Courier.Hosts
             else
                 activityLogToken = activityLogsToken;
 
-            JToken token = activityLogToken["results"].Merge(_variablesToken);
+            // give data priority over variables, duh
+            JToken token = _variablesToken.Merge(activityLogToken["data"]);
             if (token.Type == JTokenType.Null)
                 token = new JObject();
 
@@ -163,16 +175,16 @@ namespace MassTransit.Courier.Hosts
             {
                 if (string.IsNullOrEmpty(activity.Name))
                     throw new SerializationException("An Activity Name is required");
-                if (activity.ExecuteAddress == null)
+                if (activity.Address == null)
                     throw new SerializationException("An Activity ExecuteAddress is required");
 
                 Name = activity.Name;
-                ExecuteAddress = activity.ExecuteAddress;
+                Address = activity.Address;
                 Arguments = activity.Arguments ?? GetEmptyObject();
             }
 
             public string Name { get; private set; }
-            public Uri ExecuteAddress { get; private set; }
+            public Uri Address { get; private set; }
             public IDictionary<string, object> Arguments { get; private set; }
         }
 
@@ -184,28 +196,22 @@ namespace MassTransit.Courier.Hosts
             {
                 if (string.IsNullOrEmpty(activityException.Name))
                     throw new SerializationException("An Activity Name is required");
-                if (activityException.HostAddress == null)
-                    throw new SerializationException("An Activity HostAddress is required");
                 if (activityException.ExceptionInfo == null)
                     throw new SerializationException("An Activity ExceptionInfo is required");
 
                 ActivityTrackingNumber = activityException.ActivityTrackingNumber;
                 Timestamp = activityException.Timestamp;
+                Duration = activityException.Duration;
                 Name = activityException.Name;
-                HostAddress = activityException.HostAddress;
-                MachineName = activityException.MachineName;
-                ProcessId = activityException.ProcessId;
-                ProcessName = activityException.ProcessName;
+                Host = activityException.Host;
                 ExceptionInfo = activityException.ExceptionInfo;
             }
 
             public Guid ActivityTrackingNumber { get; private set; }
             public DateTime Timestamp { get; private set; }
+            public TimeSpan Duration { get; private set; }
             public string Name { get; private set; }
-            public Uri HostAddress { get; private set; }
-            public string MachineName { get; private set; }
-            public int ProcessId { get; private set; }
-            public string ProcessName { get; private set; }
+            public Host Host { get; private set; }
             public ExceptionInfo ExceptionInfo { get; private set; }
         }
 
@@ -217,19 +223,38 @@ namespace MassTransit.Courier.Hosts
             {
                 if (string.IsNullOrEmpty(activityLog.Name))
                     throw new SerializationException("An ActivityLog Name is required");
-                if (activityLog.CompensateAddress == null)
-                    throw new SerializationException("An ActivityLog CompensateAddress is required");
 
                 ActivityTrackingNumber = activityLog.ActivityTrackingNumber;
                 Name = activityLog.Name;
-                CompensateAddress = activityLog.CompensateAddress;
-                Results = activityLog.Results ?? GetEmptyObject();
+                Timestamp = activityLog.Timestamp;
+                Duration = activityLog.Duration;
+                Host = activityLog.Host;
             }
 
             public Guid ActivityTrackingNumber { get; private set; }
             public string Name { get; private set; }
-            public Uri CompensateAddress { get; private set; }
-            public IDictionary<string, object> Results { get; private set; }
+            public DateTime Timestamp { get; private set; }
+            public TimeSpan Duration { get; private set; }
+            public Host Host { get; private set; }
+        }
+
+
+        class SanitizedCompensateLog :
+            CompensateLog
+        {
+            public SanitizedCompensateLog(CompensateLog compensateLog)
+            {
+                if (compensateLog.Address == null)
+                    throw new SerializationException("An CompensateLog CompensateAddress is required");
+
+                ActivityTrackingNumber = compensateLog.ActivityTrackingNumber;
+                Address = compensateLog.Address;
+                Data = compensateLog.Data ?? GetEmptyObject();
+            }
+
+            public Guid ActivityTrackingNumber { get; private set; }
+            public Uri Address { get; private set; }
+            public IDictionary<string, object> Data { get; private set; }
         }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -20,32 +20,29 @@ namespace MassTransit.Courier.InternalMessages
     class RoutingSlipActivityFaultedMessage :
         RoutingSlipActivityFaulted
     {
-        public RoutingSlipActivityFaultedMessage(Guid trackingNumber, DateTime timestamp, string activityName,
-            Guid activityTrackingNumber, Exception exception, IDictionary<string, object> variables, IDictionary<string, object> arguments)
+        public RoutingSlipActivityFaultedMessage(Host host, Guid trackingNumber, DateTime timestamp, TimeSpan duration, string activityName,
+            Guid activityTrackingNumber, ExceptionInfo exceptionInfo, IDictionary<string, object> variables,
+            IDictionary<string, object> arguments)
         {
+            Host = host;
             TrackingNumber = trackingNumber;
             Timestamp = timestamp;
-            ActivityName = activityName;
+            Duration = duration;
             ActivityTrackingNumber = activityTrackingNumber;
-            Source = exception.Source;
-            Message = exception.Message;
-            StackTrace = exception.StackTrace;
+            ActivityName = activityName;
             Variables = variables;
             Arguments = arguments;
-
-            ExceptionInfo = new ExceptionInfoImpl(exception);
+            ExceptionInfo = exceptionInfo;
         }
-
 
         public Guid TrackingNumber { get; private set; }
         public DateTime Timestamp { get; private set; }
+        public TimeSpan Duration { get; private set; }
         public string ActivityName { get; private set; }
+        public Host Host { get; private set; }
         public Guid ActivityTrackingNumber { get; private set; }
         public ExceptionInfo ExceptionInfo { get; private set; }
         public IDictionary<string, object> Arguments { get; private set; }
         public IDictionary<string, object> Variables { get; private set; }
-        public string Source { get; private set; }
-        public string Message { get; private set; }
-        public string StackTrace { get; private set; }
     }
 }

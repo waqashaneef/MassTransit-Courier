@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -10,21 +10,27 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.Courier.MongoDbIntegration.Events
+namespace MassTransit.Courier.Contracts
 {
+    using System;
     using System.Collections.Generic;
-    using Contracts;
 
 
-    public class RoutingSlipCompletedDocument :
-        RoutingSlipEventDocument
+    public interface CompensateLog
     {
-        public RoutingSlipCompletedDocument(RoutingSlipCompleted message)
-            : base(message.Timestamp, message.Duration)
-        {
-            Variables = message.Variables;
-        }
+        /// <summary>
+        /// The tracking number for completion of the activity
+        /// </summary>
+        Guid ActivityTrackingNumber { get; }
 
-        public IDictionary<string, object> Variables { get; private set; }
+        /// <summary>
+        /// The compensation address where the routing slip should be sent for compensation
+        /// </summary>
+        Uri Address { get; }
+
+        /// <summary>
+        /// The results of the activity saved for compensation
+        /// </summary>
+        IDictionary<string, object> Data { get; }
     }
 }

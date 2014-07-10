@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -13,34 +13,29 @@
 namespace MassTransit.Courier.InternalMessages
 {
     using System;
-    using System.Diagnostics;
     using Contracts;
 
 
     class ActivityExceptionImpl :
         ActivityException
     {
-        public ActivityExceptionImpl(string name, Uri hostAddress, Guid activityTrackingNumber, DateTime timestamp,
-            Exception exception)
+        public ActivityExceptionImpl(string activityName, Host host, Guid activityTrackingNumber, DateTime timestamp, TimeSpan duration,
+            ExceptionInfo exceptionInfo)
         {
             ActivityTrackingNumber = activityTrackingNumber;
+
             Timestamp = timestamp;
-            Name = name;
-            HostAddress = hostAddress;
-            MachineName = Environment.MachineName;
-            Process process = Process.GetCurrentProcess();
-            ProcessName = process.ProcessName;
-            ProcessId = process.Id;
-            ExceptionInfo = new ExceptionInfoImpl(exception);
+            Duration = duration;
+            Name = activityName;
+            Host = host;
+            ExceptionInfo = exceptionInfo;
         }
 
         public Guid ActivityTrackingNumber { get; private set; }
         public DateTime Timestamp { get; private set; }
+        public TimeSpan Duration { get; private set; }
         public string Name { get; private set; }
-        public Uri HostAddress { get; private set; }
-        public string MachineName { get; private set; }
-        public int ProcessId { get; private set; }
-        public string ProcessName { get; private set; }
+        public Host Host { get; private set; }
         public ExceptionInfo ExceptionInfo { get; private set; }
     }
 }

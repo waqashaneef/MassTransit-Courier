@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -13,7 +13,6 @@
 namespace MassTransit.Courier.Contracts
 {
     using System;
-    using System.Collections.Generic;
 
 
     /// <summary>
@@ -32,13 +31,18 @@ namespace MassTransit.Courier.Contracts
         string Name { get; }
 
         /// <summary>
-        /// The compensation address where the routing slip should be sent for compensation
+        /// The timestamp when the activity started
         /// </summary>
-        Uri CompensateAddress { get; }
+        DateTime Timestamp { get; }
 
         /// <summary>
-        /// The results of the activity saved for compensation
+        /// The duration of the activity execution
         /// </summary>
-        IDictionary<string, object> Results { get; }
+        TimeSpan Duration { get; }
+
+        /// <summary>
+        /// The host that executed the activity
+        /// </summary>
+        Host Host { get; }
     }
 }

@@ -44,7 +44,7 @@ namespace MassTransit.Courier.Tests
         {
             RoutingSlipActivityCompleted activityCompleted = _activityCompleted.Task.Result;
 
-            Assert.AreEqual("Hello", activityCompleted.Results["OriginalValue"]);
+            Assert.AreEqual("Hello", activityCompleted.Data["OriginalValue"]);
         }
 
         [Test]

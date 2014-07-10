@@ -30,29 +30,19 @@ namespace MassTransit.Courier.Contracts
         DateTime Timestamp { get; }
 
         /// <summary>
+        /// The time from when the routing slip was created until the completion
+        /// </summary>
+        TimeSpan Duration { get; }
+
+        /// <summary>
         /// The name of the activity that caused the exception
         /// </summary>
         string Name { get; }
 
         /// <summary>
-        /// The address of the host that the exception was thrown from
+        /// The host where the activity was executed
         /// </summary>
-        Uri HostAddress { get; }
-
-        /// <summary>
-        /// The machine name where the activity exception occurred
-        /// </summary>
-        string MachineName { get; }
-
-        /// <summary>
-        /// The process-id of the faulting activity
-        /// </summary>
-        int ProcessId { get; }
-
-        /// <summary>
-        /// The process name where the activity was hosted
-        /// </summary>
-        string ProcessName { get; }
+        Host Host { get; }
 
         /// <summary>
         /// The exception details

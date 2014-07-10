@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -27,6 +27,16 @@ namespace MassTransit.Courier.Contracts
         /// The date/time when the routing slip compensation was finished
         /// </summary>
         DateTime Timestamp { get; }
+
+        /// <summary>
+        /// The duration of the activity execution
+        /// </summary>
+        TimeSpan Duration { get; }
+
+        /// <summary>
+        /// The host that executed the activity
+        /// </summary>
+        Host Host { get; }
 
         /// <summary>
         /// The exception information from the faulting activity

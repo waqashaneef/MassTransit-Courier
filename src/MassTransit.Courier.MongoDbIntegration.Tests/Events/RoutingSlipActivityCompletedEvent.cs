@@ -20,12 +20,12 @@ namespace MassTransit.Courier.MongoDbIntegration.Tests.Events
     class RoutingSlipActivityCompletedEvent :
         RoutingSlipActivityCompleted
     {
-        public RoutingSlipActivityCompletedEvent(Guid trackingNumber, string activityName,
+        public RoutingSlipActivityCompletedEvent(Guid trackingNumber, string name,
             Guid activityTrackingNumber, DateTime timestamp)
         {
             Timestamp = timestamp;
             TrackingNumber = trackingNumber;
-            ActivityName = activityName;
+            ActivityName = name;
             ActivityTrackingNumber = activityTrackingNumber;
 
             Variables = new Dictionary<string, object>
@@ -33,20 +33,23 @@ namespace MassTransit.Courier.MongoDbIntegration.Tests.Events
                     {"Content", "Goodbye, cruel world."},
                 };
 
-            Results = new Dictionary<string, object>
+            Data = new Dictionary<string, object>
                 {
                     {"OriginalContent", "Hello, World!"}
                 };
 
             Arguments = new Dictionary<string, object>();
+            Host = new TestHost(null);
         }
 
         public Guid TrackingNumber { get; private set; }
         public DateTime Timestamp { get; private set; }
+        public TimeSpan Duration { get; private set; }
         public Guid ActivityTrackingNumber { get; private set; }
         public string ActivityName { get; private set; }
+        public Host Host { get; private set; }
         public IDictionary<string, object> Arguments { get; private set; }
-        public IDictionary<string, object> Results { get; private set; }
+        public IDictionary<string, object> Data { get; private set; }
         public IDictionary<string, object> Variables { get; private set; }
     }
 }

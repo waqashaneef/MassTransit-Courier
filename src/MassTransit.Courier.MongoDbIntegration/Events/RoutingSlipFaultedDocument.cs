@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -21,7 +21,7 @@ namespace MassTransit.Courier.MongoDbIntegration.Events
         RoutingSlipEventDocument
     {
         public RoutingSlipFaultedDocument(RoutingSlipFaulted message)
-            : base(message.Timestamp)
+            : base(message.Timestamp, message.Duration)
         {
             if (message.ActivityExceptions != null)
                 ActivityExceptions = message.ActivityExceptions.Select(x => new ActivityExceptionDocument(x)).ToArray();

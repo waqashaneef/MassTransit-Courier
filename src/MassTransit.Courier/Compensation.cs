@@ -14,6 +14,7 @@ namespace MassTransit.Courier
 {
     using System;
     using System.Collections.Generic;
+    using Contracts;
 
 
     public interface Compensation<out TLog>
@@ -30,6 +31,26 @@ namespace MassTransit.Courier
         /// The service bus instance where the activity is hosted
         /// </summary>
         IServiceBus Bus { get; }
+
+        /// <summary>
+        /// The host performing the compensation
+        /// </summary>
+        Host Host { get; }
+
+        DateTime Timestamp { get; }
+
+
+        TimeSpan Elapsed { get; }
+
+
+        IConsumeContext ConsumeContext { get; }
+
+        string ActivityName { get; }
+        /// <summary>
+        /// The tracking number for this activity within the routing slip
+        /// </summary>
+        Guid ActivityTrackingNumber { get; }
+
 
         /// <summary>
         /// The compensation was successful

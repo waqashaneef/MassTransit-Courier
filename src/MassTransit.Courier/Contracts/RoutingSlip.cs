@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -29,6 +29,11 @@ namespace MassTransit.Courier.Contracts
         Guid TrackingNumber { get; }
 
         /// <summary>
+        /// The time when the routing slip was created
+        /// </summary>
+        DateTime CreateTimestamp { get; }
+
+        /// <summary>
         /// The list of activities that are remaining
         /// </summary>
         IList<Activity> Itinerary { get; }
@@ -37,6 +42,11 @@ namespace MassTransit.Courier.Contracts
         /// The logs of activities that have already been executed
         /// </summary>
         IList<ActivityLog> ActivityLogs { get; }
+
+        /// <summary>
+        /// The logs of activities that can be compensated
+        /// </summary>
+        IList<CompensateLog> CompensateLogs { get; }
 
         /// <summary>
         /// Variables that are carried with the routing slip for use by any activity

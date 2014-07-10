@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -20,23 +20,26 @@ namespace MassTransit.Courier.InternalMessages
     class RoutingSlipActivityCompensatedMessage :
         RoutingSlipActivityCompensated
     {
-        public RoutingSlipActivityCompensatedMessage(Guid trackingNumber, string activityName,
-            Guid activityTrackingNumber, DateTime timestamp, IDictionary<string, object> results, IDictionary<string, object> variables)
+        public RoutingSlipActivityCompensatedMessage(Host host, Guid trackingNumber, string activityName, Guid activityTrackingNumber,
+            DateTime timestamp, TimeSpan duration, IDictionary<string, object> data, IDictionary<string, object> variables)
         {
+            Host = host;
+            Duration = duration;
             Timestamp = timestamp;
 
             TrackingNumber = trackingNumber;
             ActivityTrackingNumber = activityTrackingNumber;
             ActivityName = activityName;
-            Results = results;
+            Data = data;
             Variables = variables;
         }
 
         public Guid ActivityTrackingNumber { get; private set; }
-        public IDictionary<string, object> Results { get; private set; }
+        public Host Host { get; private set; }
+        public IDictionary<string, object> Data { get; private set; }
         public IDictionary<string, object> Variables { get; private set; }
+        public TimeSpan Duration { get; private set; }
         public string ActivityName { get; private set; }
-
         public Guid TrackingNumber { get; private set; }
         public DateTime Timestamp { get; private set; }
     }

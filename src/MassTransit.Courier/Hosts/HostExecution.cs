@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -14,8 +14,10 @@ namespace MassTransit.Courier.Hosts
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using Contracts;
+    using InternalMessages;
 
 
     public class HostExecution<TArguments> :
@@ -27,21 +29,49 @@ namespace MassTransit.Courier.Hosts
         readonly TArguments _arguments;
         readonly Uri _compensationAddress;
         readonly IConsumeContext<RoutingSlip> _context;
+        readonly Host _host;
         readonly SanitizedRoutingSlip _routingSlip;
+        readonly Stopwatch _timer;
+        readonly DateTime _timestamp;
 
-        public HostExecution(IConsumeContext<RoutingSlip> context, Uri compensationAddress)
+        public HostExecution(Host host, Uri compensationAddress, IConsumeContext<RoutingSlip> context)
         {
-            _context = context;
+            _host = host;
             _compensationAddress = compensationAddress;
+            _context = context;
+
+            _timer = Stopwatch.StartNew();
+            NewId newId = NewId.Next();
+
+            _activityTrackingNumber = newId.ToGuid();
+            _timestamp = newId.Timestamp;
 
             _routingSlip = new SanitizedRoutingSlip(context);
             if (_routingSlip.Itinerary.Count == 0)
                 throw new ArgumentException("The routingSlip must contain at least one activity");
 
-            _activityTrackingNumber = NewId.NextGuid();
-
             _activity = _routingSlip.Itinerary[0];
             _arguments = _routingSlip.GetActivityArguments<TArguments>();
+        }
+
+        public Host Host
+        {
+            get { return _host; }
+        }
+
+        public DateTime Timestamp
+        {
+            get { return _timestamp; }
+        }
+
+        public TimeSpan Elapsed
+        {
+            get { return _timer.Elapsed; }
+        }
+
+        public IConsumeContext ConsumeContext
+        {
+            get { return _context; }
         }
 
         TArguments Execution<TArguments>.Arguments
@@ -64,104 +94,117 @@ namespace MassTransit.Courier.Hosts
             get { return _context.Bus; }
         }
 
+        public string ActivityName
+        {
+            get { return _activity.Name; }
+        }
+
         ExecutionResult Execution<TArguments>.Completed()
         {
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder();
-
-            return Complete(builder.Build(), RoutingSlipBuilder.NoArguments);
-        }
-
-        ExecutionResult Execution<TArguments>.CompletedWithoutLog(IEnumerable<KeyValuePair<string, object>> variables)
-        {
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder();
-            builder.SetVariables(variables);
-
-            return Complete(builder.Build(), RoutingSlipBuilder.NoArguments);
-        }
-
-        ExecutionResult Execution<TArguments>.CompletedWithoutLog(object variables)
-        {
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder();
-            builder.SetVariables(variables);
-
-            return Complete(builder.Build(), RoutingSlipBuilder.NoArguments);
+            return new NextActivityExecutionResult<TArguments>(this, _activity, _routingSlip);
         }
 
         ExecutionResult Execution<TArguments>.Completed<TLog>(TLog log)
         {
-            ActivityLog activityLog;
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder(log, out activityLog);
+            if (log == null)
+                throw new ArgumentNullException("log");
 
-            return Complete(builder.Build(), activityLog.Results);
+            return new NextActivityExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log);
         }
 
-        ExecutionResult Execution<TArguments>.Completed<TLog>(TLog log, object variables)
+        ExecutionResult Execution<TArguments>.CompletedWithVariables(IEnumerable<KeyValuePair<string, object>> variables)
         {
-            ActivityLog activityLog;
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder(log, out activityLog);
-            builder.SetVariables(variables);
+            if (variables == null)
+                throw new ArgumentNullException("variables");
 
-            return Complete(builder.Build(), activityLog.Results);
+            return new NextActivityExecutionResultWithVariables<TArguments>(this, _activity, _routingSlip,
+                variables.ToDictionary(x => x.Key, x => x.Value));
         }
 
-        ExecutionResult Execution<TArguments>.Completed<TLog>(TLog log,
-            IEnumerable<KeyValuePair<string, object>> variables)
+        ExecutionResult Execution<TArguments>.CompletedWithVariables(object variables)
         {
-            ActivityLog activityLog;
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder(log, out activityLog);
-            builder.SetVariables(variables);
+            if (variables == null)
+                throw new ArgumentNullException("variables");
 
-            return Complete(builder.Build(), activityLog.Results);
+            return new NextActivityExecutionResultWithVariables<TArguments>(this, _activity, _routingSlip,
+                RoutingSlipBuilder.GetObjectAsDictionary(variables));
         }
 
-        public ExecutionResult ReviseItinerary(Action<ItineraryBuilder> itineraryBuilder)
+        ExecutionResult Execution<TArguments>.CompletedWithVariables<TLog>(TLog log, object variables)
         {
-            RoutingSlipBuilder builder = CreateReviseRoutingSlipBuilder();
+            if (log == null)
+                throw new ArgumentNullException("log");
+            if (variables == null)
+                throw new ArgumentNullException("variables");
 
-            return ReviseItinerary(builder, RoutingSlipBuilder.NoArguments, itineraryBuilder);
+            return new NextActivityExecutionResultWithVariables<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
+                RoutingSlipBuilder.GetObjectAsDictionary(variables));
         }
 
-        public ExecutionResult ReviseItinerary<TLog>(TLog log, Action<ItineraryBuilder> itineraryBuilder)
+        ExecutionResult Execution<TArguments>.CompletedWithVariables<TLog>(TLog log, IEnumerable<KeyValuePair<string, object>> variables)
+        {
+            if (log == null)
+                throw new ArgumentNullException("log");
+            if (variables == null)
+                throw new ArgumentNullException("variables");
+
+            return new NextActivityExecutionResultWithVariables<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
+                variables.ToDictionary(x => x.Key, x => x.Value));
+        }
+
+        public ExecutionResult ReviseItinerary(Action<ItineraryBuilder> buildItinerary)
+        {
+            if (buildItinerary == null)
+                throw new ArgumentNullException("buildItinerary");
+
+            return new ReviseItineraryExecutionResult<TArguments>(this, _activity, _routingSlip, buildItinerary);
+        }
+
+        public ExecutionResult ReviseItinerary<TLog>(TLog log, Action<ItineraryBuilder> buildItinerary)
             where TLog : class
         {
+            if (log == null)
+                throw new ArgumentNullException("log");
+            if (buildItinerary == null)
+                throw new ArgumentNullException("buildItinerary");
             if (_compensationAddress == null)
                 throw new RoutingSlipException("The activity does not have a compensation address");
 
-            RoutingSlipBuilder builder = CreateReviseRoutingSlipBuilder();
-            ActivityLog activityLog = builder.AddActivityLog(_activity.Name, _activityTrackingNumber,
-                _compensationAddress, log);
-
-            return ReviseItinerary(builder, activityLog.Results, itineraryBuilder);
+            return new ReviseItineraryExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
+                buildItinerary);
         }
 
-        public ExecutionResult ReviseItinerary<TLog>(TLog log, object variables,
-            Action<ItineraryBuilder> buildItinerary)
+        public ExecutionResult ReviseItinerary<TLog>(TLog log, object variables, Action<ItineraryBuilder> buildItinerary)
             where TLog : class
         {
+            if (log == null)
+                throw new ArgumentNullException("log");
+            if (variables == null)
+                throw new ArgumentNullException("variables");
+            if (buildItinerary == null)
+                throw new ArgumentNullException("buildItinerary");
             if (_compensationAddress == null)
                 throw new RoutingSlipException("The activity does not have a compensation address");
 
-            RoutingSlipBuilder builder = CreateReviseRoutingSlipBuilder();
-            ActivityLog activityLog = builder.AddActivityLog(_activity.Name, _activityTrackingNumber,
-                _compensationAddress, log);
-            builder.SetVariables(variables);
-
-            return ReviseItinerary(builder, activityLog.Results, buildItinerary);
+            return new ReviseItineraryWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress,
+                log, RoutingSlipBuilder.GetObjectAsDictionary(variables), buildItinerary);
         }
 
         public ExecutionResult ReviseItinerary<TLog>(TLog log, IEnumerable<KeyValuePair<string, object>> variables,
             Action<ItineraryBuilder> buildItinerary)
             where TLog : class
         {
+            if (log == null)
+                throw new ArgumentNullException("log");
+            if (variables == null)
+                throw new ArgumentNullException("variables");
+            if (buildItinerary == null)
+                throw new ArgumentNullException("buildItinerary");
             if (_compensationAddress == null)
                 throw new RoutingSlipException("The activity does not have a compensation address");
 
-            RoutingSlipBuilder builder = CreateReviseRoutingSlipBuilder();
-            ActivityLog activityLog = builder.AddActivityLog(_activity.Name, _activityTrackingNumber,
-                _compensationAddress, log);
-            builder.SetVariables(variables);
-
-            return ReviseItinerary(builder, activityLog.Results, buildItinerary);
+            return new ReviseItineraryWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress,
+                log, variables.ToDictionary(x => x.Key, x => x.Value), buildItinerary);
         }
 
         ExecutionResult Execution<TArguments>.Faulted()
@@ -171,71 +214,15 @@ namespace MassTransit.Courier.Hosts
 
         ExecutionResult Execution<TArguments>.Faulted(Exception exception)
         {
-            return Faulted(exception);
-        }
+            if (exception == null)
+                throw new ArgumentNullException("exception");
 
-        RoutingSlipBuilder CreateReviseRoutingSlipBuilder()
-        {
-            return new RoutingSlipBuilder(_routingSlip.TrackingNumber, Enumerable.Empty<Activity>(),
-                _routingSlip.ActivityLogs, _routingSlip.Variables, _routingSlip.ActivityExceptions);
+            return Faulted(exception);
         }
 
         ExecutionResult Faulted(Exception exception)
         {
-            if (_routingSlip.IsRunning())
-                return new CompensateResult(_context, _routingSlip, _activity, _activityTrackingNumber, exception);
-
-            return new FaultResult(_context.Bus, _routingSlip.TrackingNumber, _activity, _activityTrackingNumber,
-                exception, _routingSlip.Variables);
-        }
-
-        RoutingSlipBuilder CreateRoutingSlipBuilder<TLog>(TLog log, out ActivityLog activityLog)
-            where TLog : class
-        {
-            if (_compensationAddress == null)
-                throw new RoutingSlipException("The activity does not have a compensation address");
-
-            RoutingSlipBuilder builder = CreateRoutingSlipBuilder();
-            activityLog = builder.AddActivityLog(_activity.Name, _activityTrackingNumber, _compensationAddress, log);
-
-            return builder;
-        }
-
-        RoutingSlipBuilder CreateRoutingSlipBuilder()
-        {
-            return new RoutingSlipBuilder(_routingSlip.TrackingNumber, _routingSlip.Itinerary.Skip(1),
-                _routingSlip.ActivityLogs, _routingSlip.Variables, _routingSlip.ActivityExceptions);
-        }
-
-        ExecutionResult Complete(RoutingSlip routingSlip, IDictionary<string, object> results)
-        {
-            if (routingSlip.RanToCompletion())
-            {
-                return new RanToCompletionResult(_context.Bus, routingSlip, _activity.Name, _activityTrackingNumber,
-                    results, _activity.Arguments);
-            }
-
-            return new NextActivityResult(_context, routingSlip, _activity.Name, _activityTrackingNumber, results,
-                _activity.Arguments);
-        }
-
-        ExecutionResult ReviseItinerary(RoutingSlipBuilder builder, IDictionary<string, object> results,
-            Action<ItineraryBuilder> buildItinerary)
-        {
-            builder.SetSourceItinerary(_routingSlip.Itinerary.Skip(1));
-
-            buildItinerary(builder);
-
-            RoutingSlip routingSlip = builder.Build();
-
-            if (routingSlip.RanToCompletion())
-            {
-                return new RanToCompletionResult(_context.Bus, routingSlip, _activity.Name, _activityTrackingNumber,
-                    results, _activity.Arguments);
-            }
-
-            return new NextActivityResult(_context, routingSlip, _activity.Name, _activityTrackingNumber, results,
-                _activity.Arguments);
+            return new FaultedExecutionResult<TArguments>(this, _activity, _routingSlip, new ExceptionInfoImpl(exception));
         }
     }
 }

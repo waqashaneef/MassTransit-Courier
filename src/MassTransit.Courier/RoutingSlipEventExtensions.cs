@@ -28,7 +28,7 @@ namespace MassTransit.Courier
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentException("The key must not be empty", "key");
 
-            return DeserializeVariable<T>(key, source.Results);
+            return DeserializeVariable<T>(key, source.Data);
         }
 
         public static T GetVariable<T>(this RoutingSlipActivityCompensated source, string key)
@@ -48,7 +48,7 @@ namespace MassTransit.Courier
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentException("The key must not be empty", "key");
 
-            return DeserializeVariable<T>(key, source.Results);
+            return DeserializeVariable<T>(key, source.Data);
         }
 
         public static T GetVariable<T>(this RoutingSlipActivityCompensationFailed source, string key)
@@ -78,7 +78,7 @@ namespace MassTransit.Courier
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentException("The key must not be empty", "key");
 
-            return DeserializeVariable<T>(key, source.Results);
+            return DeserializeVariable<T>(key, source.Data);
         }
 
         public static T GetVariable<T>(this RoutingSlipActivityCompleted source, string key)

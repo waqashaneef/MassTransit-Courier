@@ -14,6 +14,7 @@ namespace MassTransit.Courier
 {
     using System;
     using System.Collections.Generic;
+    using Contracts;
 
 
     public interface Execution<out TArguments>
@@ -31,10 +32,25 @@ namespace MassTransit.Courier
         /// </summary>
         Guid ActivityTrackingNumber { get; }
 
+
+        Host Host { get; }
+
+
+        DateTime Timestamp { get; }
+
+
+        TimeSpan Elapsed { get; }
+
+
+        IConsumeContext ConsumeContext { get; }
+
         /// <summary>
         /// The service bus instance where the activity is hosted
         /// </summary>
         IServiceBus Bus { get; }
+
+
+        string ActivityName { get; }
 
         /// <summary>
         /// Completes the execution, without passing a compensating log entry
@@ -47,14 +63,14 @@ namespace MassTransit.Courier
         /// </summary>
         /// <param name="variables"></param>
         /// <returns></returns>
-        ExecutionResult CompletedWithoutLog(IEnumerable<KeyValuePair<string, object>> variables);
+        ExecutionResult CompletedWithVariables(IEnumerable<KeyValuePair<string, object>> variables);
 
         /// <summary>
         /// Completes the execution, passing updated variables to the routing slip
         /// </summary>
         /// <param name="variables"></param>
         /// <returns></returns>
-        ExecutionResult CompletedWithoutLog(object variables);
+        ExecutionResult CompletedWithVariables(object variables);
 
         /// <summary>
         /// Completes the activity, passing a compensation log entry
@@ -73,7 +89,7 @@ namespace MassTransit.Courier
         /// <param name="log"></param>
         /// <param name="variables">An anonymous object of values to add/set as variables on the routing slip</param>
         /// <returns></returns>
-        ExecutionResult Completed<TLog>(TLog log, object variables)
+        ExecutionResult CompletedWithVariables<TLog>(TLog log, object variables)
             where TLog : class;
 
         /// <summary>
@@ -84,12 +100,12 @@ namespace MassTransit.Courier
         /// <param name="log"></param>
         /// <param name="variables">An dictionary of values to add/set as variables on the routing slip</param>
         /// <returns></returns>
-        ExecutionResult Completed<TLog>(TLog log, IEnumerable<KeyValuePair<string, object>> variables)
+        ExecutionResult CompletedWithVariables<TLog>(TLog log, IEnumerable<KeyValuePair<string, object>> variables)
             where TLog : class;
 
-        ExecutionResult ReviseItinerary(Action<ItineraryBuilder> itineraryBuilder);
+        ExecutionResult ReviseItinerary(Action<ItineraryBuilder> buildItinerary);
 
-        ExecutionResult ReviseItinerary<TLog>(TLog log, Action<ItineraryBuilder> itineraryBuilder)
+        ExecutionResult ReviseItinerary<TLog>(TLog log, Action<ItineraryBuilder> buildItinerary)
             where TLog : class;
 
         ExecutionResult ReviseItinerary<TLog>(TLog log, object variables, Action<ItineraryBuilder> buildItinerary)

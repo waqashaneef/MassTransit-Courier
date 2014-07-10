@@ -14,6 +14,7 @@ namespace MassTransit.Courier.Hosts
 {
     using System;
     using Contracts;
+    using InternalMessages;
     using Logging;
 
 
@@ -25,6 +26,7 @@ namespace MassTransit.Courier.Hosts
         readonly ExecuteActivityFactory<TArguments> _activityFactory;
         readonly Uri _compensateAddress;
         readonly ILog _log = Logger.Get<ExecuteActivityHost<TActivity, TArguments>>();
+        readonly HostImpl _host;
 
         public ExecuteActivityHost(Uri compensateAddress, ExecuteActivityFactory<TArguments> activityFactory)
         {
@@ -35,6 +37,7 @@ namespace MassTransit.Courier.Hosts
 
             _compensateAddress = compensateAddress;
             _activityFactory = activityFactory;
+            _host = new HostImpl(null);
         }
 
         public ExecuteActivityHost(ExecuteActivityFactory<TArguments> activityFactory)
@@ -43,11 +46,14 @@ namespace MassTransit.Courier.Hosts
                 throw new ArgumentNullException("activityFactory");
 
             _activityFactory = activityFactory;
+            _host = new HostImpl(null);
         }
 
         void Consumes<IConsumeContext<RoutingSlip>>.All.Consume(IConsumeContext<RoutingSlip> context)
         {
-            Execution<TArguments> execution = new HostExecution<TArguments>(context, _compensateAddress);
+            var host = new ExecuteHost(_host, context.InputAddress);
+
+            Execution<TArguments> execution = new HostExecution<TArguments>(host, _compensateAddress, context);
 
             if (_log.IsDebugEnabled)
                 _log.DebugFormat("Host: {0} Executing: {1}", execution.Bus.Endpoint.Address, execution.TrackingNumber);
@@ -73,6 +79,65 @@ namespace MassTransit.Courier.Hosts
             catch (Exception ex)
             {
                 return execution.Faulted(ex);
+            }
+        }
+
+
+        class ExecuteHost :
+            Host
+        {
+            public Uri Address { get; private set; }
+            readonly Host _host;
+
+            public string RoutingSlipVersion
+            {
+                get { return _host.RoutingSlipVersion; }
+            }
+
+            public string OsVersion
+            {
+                get { return _host.OsVersion; }
+            }
+
+            public string MassTransitVersion
+            {
+                get { return _host.MassTransitVersion; }
+            }
+
+            public string FrameworkVersion
+            {
+                get { return _host.FrameworkVersion; }
+            }
+
+            public string AssemblyVersion
+            {
+                get { return _host.AssemblyVersion; }
+            }
+
+            public string Assembly
+            {
+                get { return _host.Assembly; }
+            }
+
+            public int ProcessId
+            {
+                get { return _host.ProcessId; }
+            }
+
+            public string MachineName
+            {
+                get { return _host.MachineName; }
+            }
+
+            public string ProcessName
+            {
+                get { return _host.ProcessName; }
+            }
+
+            public ExecuteHost(Host host, Uri address)
+            {
+                Address = address;
+                _host = host;
             }
         }
     }

@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -45,22 +45,25 @@ namespace MassTransit.Courier
         {
             Activity activity = routingSlip.Itinerary.First();
 
-            return activity.ExecuteAddress;
+            return activity.Address;
         }
 
         public static Uri GetNextCompensateAddress(this RoutingSlip routingSlip)
         {
-            ActivityLog activity = routingSlip.ActivityLogs.Last();
+            CompensateLog activity = routingSlip.CompensateLogs.Last();
 
-            return activity.CompensateAddress;
+            return activity.Address;
         }
 
         public static void Execute(this IServiceBus bus, RoutingSlip routingSlip)
         {
             if (routingSlip.RanToCompletion())
             {
-                bus.Publish<RoutingSlipCompleted>(new RoutingSlipCompletedMessage(routingSlip.TrackingNumber,
-                    DateTime.UtcNow, routingSlip.Variables));
+                DateTime timestamp = DateTime.UtcNow;
+                TimeSpan duration = timestamp - routingSlip.CreateTimestamp;
+
+                bus.Publish<RoutingSlipCompleted>(new RoutingSlipCompletedMessage(routingSlip.TrackingNumber, timestamp, duration,
+                    routingSlip.Variables));
             }
             else
             {

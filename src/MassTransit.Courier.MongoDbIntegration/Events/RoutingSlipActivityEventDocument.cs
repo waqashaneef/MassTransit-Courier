@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -12,19 +12,25 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Courier.MongoDbIntegration.Events
 {
-    using System.Collections.Generic;
+    using System;
     using Contracts;
+    using Documents;
 
 
-    public class RoutingSlipCompletedDocument :
+    public class RoutingSlipActivityEventDocument :
         RoutingSlipEventDocument
     {
-        public RoutingSlipCompletedDocument(RoutingSlipCompleted message)
-            : base(message.Timestamp, message.Duration)
+        protected RoutingSlipActivityEventDocument(string activityName, Guid activityTrackingNumber, DateTime timestamp, TimeSpan duration,
+            Host host)
+            : base(timestamp, duration)
         {
-            Variables = message.Variables;
+            ActivityName = activityName;
+            ActivityTrackingNumber = activityTrackingNumber;
+            Host = new HostDocument(host);
         }
 
-        public IDictionary<string, object> Variables { get; private set; }
+        public string ActivityName { get; private set; }
+        public Guid ActivityTrackingNumber { get; private set; }
+        public HostDocument Host { get; private set; }
     }
 }

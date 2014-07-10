@@ -10,27 +10,26 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.Courier.MongoDbIntegration.Events
+namespace MassTransit.Courier.InternalMessages
 {
+    using System;
     using System.Collections.Generic;
     using Contracts;
-    using Documents;
 
 
-    public class RoutingSlipActivityCompensationFailedDocument :
-        RoutingSlipActivityEventDocument
+    class CompensateLogImpl :
+        CompensateLog
     {
-        public RoutingSlipActivityCompensationFailedDocument(RoutingSlipActivityCompensationFailed message)
-            : base(message.ActivityName, message.ActivityTrackingNumber, message.Timestamp, message.Duration, message.Host)
+        public CompensateLogImpl(Guid activityTrackingNumber, Uri address,
+            IDictionary<string, object> data)
         {
-            if (message.ExceptionInfo != null)
-                ExceptionInfo = new ExceptionInfoDocument(message.ExceptionInfo);
-            Data = message.Data;
-            Variables = message.Variables;
+            ActivityTrackingNumber = activityTrackingNumber;
+            Address = address;
+            Data = data;
         }
 
+        public Guid ActivityTrackingNumber { get; private set; }
+        public Uri Address { get; private set; }
         public IDictionary<string, object> Data { get; private set; }
-        public IDictionary<string, object> Variables { get; private set; }
-        public ExceptionInfoDocument ExceptionInfo { get; private set; }
     }
 }

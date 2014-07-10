@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -21,32 +21,57 @@ namespace MassTransit.Courier.InternalMessages
         RoutingSlipActivityCompensationFailed,
         RoutingSlipCompensationFailed
     {
-        public CompensationFailedMessage(Guid trackingNumber, string activityName, Guid activityTrackingNumber,
-            DateTime timestamp, Exception exception, IDictionary<string, object> results, IDictionary<string, object> variables)
+        readonly TimeSpan _duration;
+        readonly DateTime _failureTimestamp;
+        readonly TimeSpan _routingSlipDuration;
+        readonly DateTime _timestamp;
+
+        public CompensationFailedMessage(Host host, Guid trackingNumber, string activityName, Guid activityTrackingNumber,
+            DateTime timestamp, TimeSpan duration, DateTime failureTimestamp, TimeSpan routingSlipDuration, IDictionary<string, object> data,
+            IDictionary<string, object> variables, Exception exception)
         {
-            Timestamp = timestamp;
+            _failureTimestamp = failureTimestamp;
+            _routingSlipDuration = routingSlipDuration;
+            Host = host;
+            _duration = duration;
+            _timestamp = timestamp;
 
             TrackingNumber = trackingNumber;
             ActivityTrackingNumber = activityTrackingNumber;
             ActivityName = activityName;
-            Source = exception.Source;
-            Message = exception.Message;
-            StackTrace = exception.StackTrace;
-            Results = results;
+            Data = data;
             Variables = variables;
             ExceptionInfo = new ExceptionInfoImpl(exception);
         }
 
         public Guid TrackingNumber { get; private set; }
-        public DateTime Timestamp { get; private set; }
+
+        DateTime RoutingSlipActivityCompensationFailed.Timestamp
+        {
+            get { return _timestamp; }
+        }
 
         public Guid ActivityTrackingNumber { get; private set; }
         public string ActivityName { get; private set; }
-        public IDictionary<string, object> Results { get; private set; }
-        public string Source { get; private set; }
-        public string Message { get; private set; }
-        public string StackTrace { get; private set; }
+        public IDictionary<string, object> Data { get; private set; }
         public ExceptionInfo ExceptionInfo { get; private set; }
-        public IDictionary<string, object> Variables { get; set; }
+        public IDictionary<string, object> Variables { get; private set; }
+
+        TimeSpan RoutingSlipActivityCompensationFailed.Duration
+        {
+            get { return _duration; }
+        }
+
+        public Host Host { get; private set; }
+
+        DateTime RoutingSlipCompensationFailed.Timestamp
+        {
+            get { return _failureTimestamp; }
+        }
+
+        TimeSpan RoutingSlipCompensationFailed.Duration
+        {
+            get { return _routingSlipDuration; }
+        }
     }
 }

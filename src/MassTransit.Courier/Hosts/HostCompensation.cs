@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -14,10 +14,9 @@ namespace MassTransit.Courier.Hosts
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using Contracts;
-    using Extensions;
-    using InternalMessages;
 
 
     public class HostCompensation<TLog> :
@@ -25,25 +24,41 @@ namespace MassTransit.Courier.Hosts
         where TLog : class
     {
         readonly ActivityLog _activityLog;
+        readonly CompensateLog _compensateLog;
         readonly IConsumeContext<RoutingSlip> _context;
-        readonly TLog _log;
+        readonly TLog _data;
+        readonly Host _host;
         readonly SanitizedRoutingSlip _routingSlip;
+        readonly Stopwatch _timer;
+        readonly DateTime _timestamp;
 
-        public HostCompensation(IConsumeContext<RoutingSlip> context)
+        public HostCompensation(Host host, IConsumeContext<RoutingSlip> context)
         {
+            _host = host;
             _context = context;
 
+            _timer = Stopwatch.StartNew();
+            _timestamp = DateTime.UtcNow;
+
             _routingSlip = new SanitizedRoutingSlip(context);
-            if (_routingSlip.ActivityLogs.Count == 0)
+            if (_routingSlip.CompensateLogs.Count == 0)
                 throw new ArgumentException("The routingSlip must contain at least one activity log");
 
-            _activityLog = _routingSlip.ActivityLogs.Last();
-            _log = _routingSlip.GetActivityLog<TLog>();
+            _compensateLog = _routingSlip.CompensateLogs.Last();
+
+            _activityLog = _routingSlip.ActivityLogs.SingleOrDefault(x => x.ActivityTrackingNumber == _compensateLog.ActivityTrackingNumber);
+            if (_activityLog == null)
+            {
+                throw new RoutingSlipException("The compensation log did not have a matching activity log entry: "
+                                               + _compensateLog.ActivityTrackingNumber);
+            }
+
+            _data = _routingSlip.GetCompensateLogData<TLog>();
         }
 
         TLog Compensation<TLog>.Log
         {
-            get { return _log; }
+            get { return _data; }
         }
 
         Guid Compensation<TLog>.TrackingNumber
@@ -56,93 +71,68 @@ namespace MassTransit.Courier.Hosts
             get { return _context.Bus; }
         }
 
+        public Host Host
+        {
+            get { return _host; }
+        }
+
+        public DateTime Timestamp
+        {
+            get { return _timestamp; }
+        }
+
+        public TimeSpan Elapsed
+        {
+            get { return _timer.Elapsed; }
+        }
+
+        public IConsumeContext ConsumeContext
+        {
+            get { return _context; }
+        }
+
+        public string ActivityName
+        {
+            get { return _activityLog.Name; }
+        }
+
+        public Guid ActivityTrackingNumber
+        {
+            get { return _activityLog.ActivityTrackingNumber; }
+        }
+
         CompensationResult Compensation<TLog>.Compensated()
         {
-            var builder = new RoutingSlipBuilder(_routingSlip.TrackingNumber, _routingSlip.Itinerary,
-                _routingSlip.ActivityLogs.SkipLast(), _routingSlip.Variables, _routingSlip.ActivityExceptions);
-
-            return Compensated(builder.Build());
+            return new CompensatedCompensationResult<TLog>(this, _compensateLog, _routingSlip);
         }
 
         CompensationResult Compensation<TLog>.Compensated(object values)
         {
-            var builder = new RoutingSlipBuilder(_routingSlip.TrackingNumber, _routingSlip.Itinerary,
-                _routingSlip.ActivityLogs.SkipLast(), _routingSlip.Variables, _routingSlip.ActivityExceptions);
-            builder.SetVariables(values);
+            if (values == null)
+                throw new ArgumentNullException("values");
 
-            return Compensated(builder.Build());
+            return new CompensatedWithVariablesCompensationResult<TLog>(this, _compensateLog, _routingSlip,
+                RoutingSlipBuilder.GetObjectAsDictionary(values));
         }
 
         CompensationResult Compensation<TLog>.Compensated(IDictionary<string, object> values)
         {
-            var builder = new RoutingSlipBuilder(_routingSlip.TrackingNumber, _routingSlip.Itinerary,
-                _routingSlip.ActivityLogs.SkipLast(), _routingSlip.Variables, _routingSlip.ActivityExceptions);
-            builder.SetVariables(values);
+            if (values == null)
+                throw new ArgumentNullException("values");
 
-            return Compensated(builder.Build());
+            return new CompensatedWithVariablesCompensationResult<TLog>(this, _compensateLog, _routingSlip, values);
         }
 
         CompensationResult Compensation<TLog>.Failed()
         {
             var exception = new RoutingSlipException("The routing slip compensation failed");
-            Failed(exception);
 
-            throw exception;
+            return new FailedCompensationResult<TLog>(this, _compensateLog, _routingSlip, exception);
         }
 
         CompensationResult Compensation<TLog>.Failed(Exception exception)
         {
-            Failed(exception);
-
-            throw exception;
-        }
-
-        void Failed(Exception exception)
-        {
-            DateTime timestamp = DateTime.UtcNow;
-
-            var message = new CompensationFailedMessage(_routingSlip.TrackingNumber,
-                _activityLog.Name, _activityLog.ActivityTrackingNumber, timestamp, exception, _activityLog.Results, _routingSlip.Variables);
-
-            _context.Bus.Publish(message);
-
-            // the exception is thrown so MT will move the routing slip into the error queue
-            throw exception;
-        }
-
-        CompensationResult Compensated(RoutingSlip routingSlip)
-        {
-            DateTime timestamp = DateTime.UtcNow;
-
-            _context.Bus.Publish<RoutingSlipActivityCompensated>(
-                new RoutingSlipActivityCompensatedMessage(_routingSlip.TrackingNumber,
-                    _activityLog.Name, _activityLog.ActivityTrackingNumber, timestamp, _activityLog.Results, _routingSlip.Variables));
-
-            if (routingSlip.IsRunning())
-            {
-                IEndpoint endpoint = _context.Bus.GetEndpoint(routingSlip.GetNextCompensateAddress());
-
-                endpoint.Forward(_context, routingSlip);
-
-                return new CompensatedResult();
-            }
-
-            _context.Bus.Publish<RoutingSlipFaulted>(new RoutingSlipFaultedMessage(routingSlip.TrackingNumber, timestamp,
-                routingSlip.ActivityExceptions, routingSlip.Variables));
-
-            return new FaultedResult();
-        }
-
-
-        class CompensatedResult :
-            CompensationResult
-        {
-        }
-
-
-        class FaultedResult :
-            CompensationResult
-        {
+            return new FailedCompensationResult<TLog>(this, _compensateLog, _routingSlip, exception);
         }
     }
 }

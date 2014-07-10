@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -13,25 +13,25 @@
 namespace MassTransit.Courier.InternalMessages
 {
     using System;
-    using System.Collections.Generic;
     using Contracts;
 
 
     class ActivityLogImpl :
         ActivityLog
     {
-        public ActivityLogImpl(Guid activityTrackingNumber, string name, Uri compensateAddress,
-            IDictionary<string, object> results)
+        public ActivityLogImpl(Host host, Guid activityTrackingNumber, string name, DateTime timestamp, TimeSpan duration)
         {
             ActivityTrackingNumber = activityTrackingNumber;
             Name = name;
-            CompensateAddress = compensateAddress;
-            Results = results;
+            Timestamp = timestamp;
+            Duration = duration;
+            Host = host;
         }
 
         public Guid ActivityTrackingNumber { get; private set; }
         public string Name { get; private set; }
-        public Uri CompensateAddress { get; private set; }
-        public IDictionary<string, object> Results { get; private set; }
+        public DateTime Timestamp { get; private set; }
+        public TimeSpan Duration { get; private set; }
+        public Host Host { get; private set; }
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -23,20 +23,26 @@ namespace MassTransit.Courier.Hosts
     {
         readonly string _activityName;
         readonly Guid _activityTrackingNumber;
-        readonly IServiceBus _bus;
-        readonly IDictionary<string, object> _results;
         readonly IDictionary<string, object> _arguments;
+        readonly IServiceBus _bus;
+        readonly IDictionary<string, object> _data;
+        readonly TimeSpan _duration;
         readonly RoutingSlip _routingSlip;
         readonly DateTime _timestamp;
+        readonly Host _host;
 
-        public RanToCompletionResult(IServiceBus bus, RoutingSlip routingSlip, string activityName, Guid activityTrackingNumber, IDictionary<string, object> results, IDictionary<string, object> arguments)
+        public RanToCompletionResult(IServiceBus bus, RoutingSlip routingSlip, Guid activityTrackingNumber,
+            string activityName, DateTime timestamp, TimeSpan duration, IDictionary<string, object> data,
+            IDictionary<string, object> arguments, Host host)
         {
-            _timestamp = DateTime.UtcNow;
+            _timestamp = timestamp;
             _routingSlip = routingSlip;
             _activityName = activityName;
             _activityTrackingNumber = activityTrackingNumber;
-            _results = results;
+            _data = data;
             _arguments = arguments;
+            _host = host;
+            _duration = duration;
             _bus = bus;
         }
 
@@ -47,12 +53,16 @@ namespace MassTransit.Courier.Hosts
 
         public void Evaluate()
         {
-            _bus.Publish<RoutingSlipActivityCompleted>(
-                new RoutingSlipActivityCompletedMessage(_routingSlip.TrackingNumber, _activityName,
-                    _activityTrackingNumber, _timestamp, _results, _routingSlip.Variables, _arguments));
+            RoutingSlipActivityCompleted activityEvent = new RoutingSlipActivityCompletedMessage(_host, _routingSlip.TrackingNumber, _activityName,
+                _activityTrackingNumber, _timestamp, _duration, _data, _routingSlip.Variables, _arguments);
+            _bus.Publish(activityEvent);
 
-            _bus.Publish<RoutingSlipCompleted>(new RoutingSlipCompletedMessage(_routingSlip.TrackingNumber, _timestamp,
-                _routingSlip.Variables));
+            DateTime completedTimestamp = _timestamp + _duration;
+            TimeSpan completedDuration = completedTimestamp - _routingSlip.CreateTimestamp;
+
+            RoutingSlipCompleted completedEvent = new RoutingSlipCompletedMessage(_routingSlip.TrackingNumber, completedTimestamp,
+                completedDuration, _routingSlip.Variables);
+            _bus.Publish(completedEvent);
         }
     }
 }

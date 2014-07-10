@@ -32,7 +32,7 @@
         {
             RoutingSlipActivityCompensated activityCompensated = _firstActivityCompensated.Task.Result;
 
-            Assert.AreEqual("Hello", activityCompensated.Results["OriginalValue"]);
+            Assert.AreEqual("Hello", activityCompensated.Data["OriginalValue"]);
         }
 
         [Test]

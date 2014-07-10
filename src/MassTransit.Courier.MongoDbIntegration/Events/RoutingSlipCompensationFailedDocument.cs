@@ -20,7 +20,7 @@ namespace MassTransit.Courier.MongoDbIntegration.Events
         RoutingSlipEventDocument
     {
         public RoutingSlipCompensationFailedDocument(RoutingSlipCompensationFailed message)
-            : base(message.Timestamp)
+            : base(message.Timestamp, message.Duration)
         {
             if (message.ExceptionInfo != null)
                 ExceptionInfo = new ExceptionInfoDocument(message.ExceptionInfo);

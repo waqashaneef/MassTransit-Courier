@@ -54,6 +54,13 @@ namespace MassTransit.Courier
         void AddVariable(string key, string value);
 
         /// <summary>
+        /// Add a variable to the routing slip
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="value"></param>
+        void AddVariable(string key, object value);
+
+        /// <summary>
         /// Sets the value of any existing variables to the value in the anonymous object,
         /// as well as adding any additional variables that did not exist previously.
         /// 

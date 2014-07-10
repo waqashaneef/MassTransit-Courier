@@ -20,15 +20,15 @@ namespace MassTransit.Courier.InternalMessages
     class ActivityImpl :
         Activity
     {
-        public ActivityImpl(string name, Uri executeAddress, IDictionary<string, object> arguments)
+        public ActivityImpl(string name, Uri address, IDictionary<string, object> arguments)
         {
             Name = name;
-            ExecuteAddress = executeAddress;
+            Address = address;
             Arguments = arguments;
         }
 
         public string Name { get; private set; }
-        public Uri ExecuteAddress { get; private set; }
+        public Uri Address { get; private set; }
         public IDictionary<string, object> Arguments { get; private set; }
     }
 }
