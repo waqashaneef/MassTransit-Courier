@@ -17,13 +17,13 @@ namespace MassTransit.Courier.Hosts
     using Contracts;
 
 
-    class NextActivityExecutionResultWithVariables<TArguments> :
+    class NextActivityWithVariablesExecutionResult<TArguments> :
         CompletedExecutionResult<TArguments>
         where TArguments : class
     {
         readonly IDictionary<string, object> _variables;
 
-        public NextActivityExecutionResultWithVariables(Execution<TArguments> execution, Activity activity, RoutingSlip routingSlip,
+        public NextActivityWithVariablesExecutionResult(Execution<TArguments> execution, Activity activity, RoutingSlip routingSlip,
             IDictionary<string, object> variables)
             : base(execution, activity, routingSlip)
         {
@@ -32,13 +32,14 @@ namespace MassTransit.Courier.Hosts
 
         protected override void Build(RoutingSlipBuilder builder)
         {
-            builder.AddActivityLog(Execution.Host, Activity.Name, Execution.ActivityTrackingNumber, Execution.Timestamp, Duration);
+            base.Build(builder);
+
             builder.SetVariables(_variables);
         }
     }
 
 
-    class NextActivityExecutionResultWithVariables<TArguments, TLog> :
+    class NextActivityWithVariablesExecutionResult<TArguments, TLog> :
         CompletedExecutionResult<TArguments>
         where TArguments : class
         where TLog : class
@@ -46,7 +47,7 @@ namespace MassTransit.Courier.Hosts
         readonly Uri _compensationAddress;
         readonly IDictionary<string, object> _variables;
 
-        public NextActivityExecutionResultWithVariables(Execution<TArguments> execution, Activity activity, RoutingSlip routingSlip,
+        public NextActivityWithVariablesExecutionResult(Execution<TArguments> execution, Activity activity, RoutingSlip routingSlip,
             Uri compensationAddress, TLog log, IDictionary<string, object> variables)
             : base(execution, activity, routingSlip, RoutingSlipBuilder.GetObjectAsDictionary(log))
         {
@@ -56,7 +57,8 @@ namespace MassTransit.Courier.Hosts
 
         protected override void Build(RoutingSlipBuilder builder)
         {
-            builder.AddActivityLog(Execution.Host, Activity.Name, Execution.ActivityTrackingNumber, Execution.Timestamp, Duration);
+            base.Build(builder);
+
             builder.AddCompensateLog(Execution.ActivityTrackingNumber, _compensationAddress, Data);
             builder.SetVariables(_variables);
         }

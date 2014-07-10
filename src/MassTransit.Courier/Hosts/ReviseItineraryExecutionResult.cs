@@ -40,7 +40,7 @@ namespace MassTransit.Courier.Hosts
 
         protected override void Build(RoutingSlipBuilder builder)
         {
-            builder.AddActivityLog(Execution.Host, Activity.Name, Execution.ActivityTrackingNumber, Execution.Timestamp, Duration);
+            base.Build(builder);
 
             _itineraryBuilder(builder);
         }

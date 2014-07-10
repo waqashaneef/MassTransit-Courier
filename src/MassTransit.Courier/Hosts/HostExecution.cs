@@ -117,7 +117,7 @@ namespace MassTransit.Courier.Hosts
             if (variables == null)
                 throw new ArgumentNullException("variables");
 
-            return new NextActivityExecutionResultWithVariables<TArguments>(this, _activity, _routingSlip,
+            return new NextActivityWithVariablesExecutionResult<TArguments>(this, _activity, _routingSlip,
                 variables.ToDictionary(x => x.Key, x => x.Value));
         }
 
@@ -126,7 +126,7 @@ namespace MassTransit.Courier.Hosts
             if (variables == null)
                 throw new ArgumentNullException("variables");
 
-            return new NextActivityExecutionResultWithVariables<TArguments>(this, _activity, _routingSlip,
+            return new NextActivityWithVariablesExecutionResult<TArguments>(this, _activity, _routingSlip,
                 RoutingSlipBuilder.GetObjectAsDictionary(variables));
         }
 
@@ -137,7 +137,7 @@ namespace MassTransit.Courier.Hosts
             if (variables == null)
                 throw new ArgumentNullException("variables");
 
-            return new NextActivityExecutionResultWithVariables<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
+            return new NextActivityWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
                 RoutingSlipBuilder.GetObjectAsDictionary(variables));
         }
 
@@ -148,7 +148,7 @@ namespace MassTransit.Courier.Hosts
             if (variables == null)
                 throw new ArgumentNullException("variables");
 
-            return new NextActivityExecutionResultWithVariables<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
+            return new NextActivityWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
                 variables.ToDictionary(x => x.Key, x => x.Value));
         }
 

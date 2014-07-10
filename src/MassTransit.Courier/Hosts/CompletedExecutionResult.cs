@@ -72,14 +72,14 @@ namespace MassTransit.Courier.Hosts
 
             _execution.Bus.Publish(message);
 
-            if (HasNextActivity())
+            RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
+
+            Build(builder);
+
+            RoutingSlip routingSlip = builder.Build();
+
+            if (HasNextActivity(routingSlip))
             {
-                RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
-
-                Build(builder);
-
-                RoutingSlip routingSlip = builder.Build();
-
                 IEndpoint endpoint = _execution.Bus.GetEndpoint(routingSlip.GetNextExecuteAddress());
                 endpoint.Forward(_execution.ConsumeContext, routingSlip);
             }
@@ -89,18 +89,19 @@ namespace MassTransit.Courier.Hosts
                 TimeSpan completedDuration = completedTimestamp - _routingSlip.CreateTimestamp;
 
                 RoutingSlipCompleted completedEvent = new RoutingSlipCompletedMessage(_routingSlip.TrackingNumber, completedTimestamp,
-                    completedDuration, _routingSlip.Variables);
+                    completedDuration, routingSlip.Variables);
                 _execution.Bus.Publish(completedEvent);
             }
         }
 
-        bool HasNextActivity()
+        static bool HasNextActivity(RoutingSlip routingSlip)
         {
-            return !_routingSlip.Itinerary.Skip(1).Any();
+            return routingSlip.Itinerary.Any();
         }
 
         protected virtual void Build(RoutingSlipBuilder builder)
         {
+            builder.AddActivityLog(Execution.Host, Activity.Name, Execution.ActivityTrackingNumber, Execution.Timestamp, Duration);
         }
 
         protected virtual RoutingSlipBuilder CreateRoutingSlipBuilder(RoutingSlip routingSlip)

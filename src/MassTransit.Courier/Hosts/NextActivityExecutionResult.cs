@@ -24,11 +24,6 @@ namespace MassTransit.Courier.Hosts
             : base(execution, activity, routingSlip)
         {
         }
-
-        protected override void Build(RoutingSlipBuilder builder)
-        {
-            builder.AddActivityLog(Execution.Host, Activity.Name, Execution.ActivityTrackingNumber, Execution.Timestamp, Duration);
-        }
     }
 
 
@@ -50,7 +45,8 @@ namespace MassTransit.Courier.Hosts
 
         protected override void Build(RoutingSlipBuilder builder)
         {
-            builder.AddActivityLog(Execution.Host, Activity.Name, Execution.ActivityTrackingNumber, Execution.Timestamp, Duration);
+            base.Build(builder);
+
             builder.AddCompensateLog(Execution.ActivityTrackingNumber, _compensationAddress, Data);
         }
     }

@@ -73,6 +73,7 @@
     <Compile Include="ActivityHost_Specs.cs" />
     <Compile Include="Configuration_Specs.cs" />
     <Compile Include="ContextSetup.cs" />
+    <Compile Include="EncryptedArgument_Specs.cs" />
     <Compile Include="FaultActivityEvent_Specs.cs" />
     <Compile Include="ObjectGraph_Specs.cs" />
     <Compile Include="RanToCompletion_Specs.cs" />

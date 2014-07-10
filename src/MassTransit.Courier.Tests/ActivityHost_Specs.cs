@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -41,11 +41,11 @@ namespace MassTransit.Courier.Tests
                 new FactoryMethodExecuteActivityFactory<TestActivity, TestArguments>(_ => new TestActivity()));
 
             _bus = ServiceBusFactory.New(x =>
-                {
-                    x.ReceiveFrom("loopback://localhost/execute_test");
+            {
+                x.ReceiveFrom("loopback://localhost/execute_test");
 
-                    x.Subscribe(s => s.Instance(_host));
-                });
+                x.Subscribe(s => s.Instance(_host));
+            });
         }
 
         [TestFixtureTearDown]
@@ -78,29 +78,25 @@ namespace MassTransit.Courier.Tests
         public void Setup()
         {
             _test = TestFactory.ForConsumer<ExecuteActivityHost<TestActivity, TestArguments>>()
-                               .InSingleBusScenario()
-                               .New(x =>
-                                   {
-                                       x.ConstructUsing(
-                                           () =>
-                                               {
-                                                   var compensateAddress = new Uri("loopback://localhost/mt_server");
+                .InSingleBusScenario()
+                .New(x =>
+                {
+                    x.ConstructUsing(() =>
+                    {
+                        var compensateAddress = new Uri("loopback://localhost/mt_server");
 
-                                                   return
-                                                       new ExecuteActivityHost<TestActivity, TestArguments>(
-                                                           compensateAddress,
-                                                           new FactoryMethodExecuteActivityFactory
-                                                               <TestActivity, TestArguments>(_ => new TestActivity()));
-                                               });
+                        return new ExecuteActivityHost<TestActivity, TestArguments>(compensateAddress,
+                            new FactoryMethodExecuteActivityFactory<TestActivity, TestArguments>(_ => new TestActivity()));
+                    });
 
-                                       var builder = new RoutingSlipBuilder(Guid.NewGuid());
-                                       builder.AddActivity("test", new Uri("loopback://localhost/mt_client"), new
-                                           {
-                                               Value = "Hello",
-                                           });
+                    var builder = new RoutingSlipBuilder(Guid.NewGuid());
+                    builder.AddActivity("test", new Uri("loopback://localhost/mt_client"), new
+                    {
+                        Value = "Hello",
+                    });
 
-                                       x.Send(builder.Build());
-                                   });
+                    x.Send(builder.Build());
+                });
 
             _test.Execute();
         }

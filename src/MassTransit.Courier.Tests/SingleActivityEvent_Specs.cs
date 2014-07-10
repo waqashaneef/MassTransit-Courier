@@ -77,7 +77,7 @@ namespace MassTransit.Courier.Tests
             RoutingSlipCompleted completed = _completed.Task.Result;
             RoutingSlipActivityCompleted activityCompleted = _activityCompleted.Task.Result;
 
-            Assert.AreEqual(completed.Timestamp, activityCompleted.Timestamp);
+            Assert.AreEqual(completed.Timestamp, activityCompleted.Timestamp + activityCompleted.Duration);
         }
 
         [Test]

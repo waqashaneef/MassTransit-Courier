@@ -33,34 +33,34 @@ namespace MassTransit.Courier.Hosts
 
         public SanitizedRoutingSlip(IConsumeContext<RoutingSlip> context)
         {
-            IConsumeContext<RoutingSlip> jsonContext;
-            using (var ms = new MemoryStream())
-            {
-                context.BaseContext.CopyBodyTo(ms);
-
-                ReceiveContext receiveContext = ReceiveContext.FromBodyStream(ms, false);
-
-                if (string.Compare(context.ContentType, "application/vnd.masstransit+json",
-                    StringComparison.OrdinalIgnoreCase) == 0)
-                    jsonContext = TranslateJsonBody(receiveContext);
-                else if (string.Compare(context.ContentType, "application/vnd.masstransit+xml",
-                    StringComparison.OrdinalIgnoreCase) == 0)
-                    jsonContext = TranslateXmlBody(receiveContext);
-                else
-                    throw new InvalidOperationException("Only JSON and XML messages can be scheduled");
-            }
+//            IConsumeContext<RoutingSlip> jsonContext;
+//            using (var ms = new MemoryStream())
+//            {
+//                context.BaseContext.CopyBodyTo(ms);
+//
+//                ReceiveContext receiveContext = ReceiveContext.FromBodyStream(ms, false);
+//
+//                if (string.Compare(context.ContentType, "application/vnd.masstransit+json",
+//                    StringComparison.OrdinalIgnoreCase) == 0)
+//                    jsonContext = TranslateJsonBody(receiveContext);
+//                else if (string.Compare(context.ContentType, "application/vnd.masstransit+xml",
+//                    StringComparison.OrdinalIgnoreCase) == 0)
+//                    jsonContext = TranslateXmlBody(receiveContext);
+//                else
+//                    throw new InvalidOperationException("Only JSON and XML messages can be scheduled");
+//            }
 
             IConsumeContext<JToken> messageTokenContext;
-            if (!jsonContext.TryGetContext(out messageTokenContext))
+            if (!context.TryGetContext(out messageTokenContext))
                 throw new InvalidOperationException("Unable to retrieve JSON token");
 
             _messageToken = messageTokenContext.Message;
 
-            RoutingSlip routingSlip = jsonContext.Message;
+            RoutingSlip routingSlip = context.Message;
 
             TrackingNumber = routingSlip.TrackingNumber;
 
-            _variablesToken = _messageToken["variables"];
+            _variablesToken = _messageToken["variables"] ?? new JObject();
 
             Variables = routingSlip.Variables ?? GetEmptyObject();
 
@@ -96,20 +96,25 @@ namespace MassTransit.Courier.Hosts
 
 
         public T GetActivityArguments<T>()
+            where T : class
+        {
+            return GetActivityArguments(new DefaultJsonTypeConverter<T>());
+        }
+
+        public T GetActivityArguments<T>(JsonTypeConverter<T> converter)
+            where T : class
         {
             JToken itineraryToken = _messageToken["itinerary"];
+            if (itineraryToken == null)
+                throw new ArgumentException("Itinerary not found in the routing slip");
 
             JToken activityToken = itineraryToken is JArray ? itineraryToken[0] : itineraryToken;
+            if (activityToken == null)
+                throw new ArgumentException("Activity not found in the routing slip");
 
-            // give arguments priority over variables, stupid
             JToken token = _variablesToken.Merge(activityToken["arguments"]);
-            if (token.Type == JTokenType.Null)
-                token = new JObject();
 
-            using (var jsonReader = new JTokenReader(token))
-            {
-                return (T)JsonMessageSerializer.Deserializer.Deserialize(jsonReader, typeof(T));
-            }
+            return converter.Convert(token);
         }
 
         public T GetCompensateLogData<T>()
