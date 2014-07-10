@@ -14,10 +14,8 @@ namespace MassTransit.Courier.Hosts
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
-    using Context;
     using Contracts;
     using MassTransit.Serialization;
     using Newtonsoft.Json;
@@ -33,23 +31,6 @@ namespace MassTransit.Courier.Hosts
 
         public SanitizedRoutingSlip(IConsumeContext<RoutingSlip> context)
         {
-//            IConsumeContext<RoutingSlip> jsonContext;
-//            using (var ms = new MemoryStream())
-//            {
-//                context.BaseContext.CopyBodyTo(ms);
-//
-//                ReceiveContext receiveContext = ReceiveContext.FromBodyStream(ms, false);
-//
-//                if (string.Compare(context.ContentType, "application/vnd.masstransit+json",
-//                    StringComparison.OrdinalIgnoreCase) == 0)
-//                    jsonContext = TranslateJsonBody(receiveContext);
-//                else if (string.Compare(context.ContentType, "application/vnd.masstransit+xml",
-//                    StringComparison.OrdinalIgnoreCase) == 0)
-//                    jsonContext = TranslateXmlBody(receiveContext);
-//                else
-//                    throw new InvalidOperationException("Only JSON and XML messages can be scheduled");
-//            }
-
             IConsumeContext<JToken> messageTokenContext;
             if (!context.TryGetContext(out messageTokenContext))
                 throw new InvalidOperationException("Unable to retrieve JSON token");
@@ -79,6 +60,10 @@ namespace MassTransit.Courier.Hosts
             ActivityExceptions = (routingSlip.ActivityExceptions ?? new List<ActivityException>())
                 .Select(x => (ActivityException)new SanitizedActivityException(x))
                 .ToList();
+
+            Subscriptions = (routingSlip.Subscriptions ?? new List<Subscription>())
+                .Select(x => (Subscription)new SanitizedSubscription(x))
+                .ToList();
         }
 
 
@@ -93,6 +78,7 @@ namespace MassTransit.Courier.Hosts
 
         public IDictionary<string, object> Variables { get; private set; }
         public IList<ActivityException> ActivityExceptions { get; private set; }
+        public IList<Subscription> Subscriptions { get; private set; }
 
 
         public T GetActivityArguments<T>()
@@ -137,34 +123,8 @@ namespace MassTransit.Courier.Hosts
 
             using (var jsonReader = new JTokenReader(token))
             {
-                return (T)JsonMessageSerializer.Deserializer.Deserialize(jsonReader, typeof(T));
+                return (T)SerializerCache.Deserializer.Deserialize(jsonReader, typeof(T));
             }
-        }
-
-        static IConsumeContext<RoutingSlip> TranslateJsonBody(IReceiveContext context)
-        {
-            var serializer = new JsonMessageSerializer();
-
-            serializer.Deserialize(context);
-
-            IConsumeContext<RoutingSlip> routingSlipContext;
-            if (context.TryGetContext(out routingSlipContext))
-                return routingSlipContext;
-
-            throw new InvalidOperationException("Unable to reprocess message as RoutingSlip");
-        }
-
-        static IConsumeContext<RoutingSlip> TranslateXmlBody(IReceiveContext context)
-        {
-            var serializer = new XmlMessageSerializer();
-
-            serializer.Deserialize(context);
-
-            IConsumeContext<RoutingSlip> routingSlipContext;
-            if (context.TryGetContext(out routingSlipContext))
-                return routingSlipContext;
-
-            throw new InvalidOperationException("Unable to reprocess message as RoutingSlip");
         }
 
         static IDictionary<string, object> GetEmptyObject()
@@ -260,6 +220,25 @@ namespace MassTransit.Courier.Hosts
             public Guid ActivityTrackingNumber { get; private set; }
             public Uri Address { get; private set; }
             public IDictionary<string, object> Data { get; private set; }
+        }
+
+
+        class SanitizedSubscription :
+            Subscription
+        {
+            public SanitizedSubscription(Subscription subscription)
+            {
+                if (subscription.Address == null)
+                    throw new SerializationException("A subscription address is required");
+
+                Address = subscription.Address;
+                Events = subscription.Events;
+                Include = subscription.Include;
+            }
+
+            public Uri Address { get; private set; }
+            public RoutingSlipEvents Events { get; private set; }
+            public RoutingSlipEventContents Include { get; private set; }
         }
     }
 }

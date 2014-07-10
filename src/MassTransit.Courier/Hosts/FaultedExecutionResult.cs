@@ -15,7 +15,6 @@ namespace MassTransit.Courier.Hosts
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Security.Cryptography.X509Certificates;
     using Contracts;
     using InternalMessages;
 
@@ -46,10 +45,12 @@ namespace MassTransit.Courier.Hosts
 
         public void Evaluate()
         {
+            IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(_routingSlip);
+
             RoutingSlipActivityFaulted activityFaulted = new RoutingSlipActivityFaultedMessage(_execution.Host, _execution.TrackingNumber,
                 _execution.Timestamp, _duration, _execution.ActivityName, _execution.ActivityTrackingNumber, _exceptionInfo,
                 _routingSlip.Variables, _activity.Arguments);
-            _execution.Bus.Publish(activityFaulted);
+            publisher.Publish(_execution.Bus, activityFaulted);
 
             if (HasCompensationLogs())
             {
@@ -69,7 +70,7 @@ namespace MassTransit.Courier.Hosts
 
                 RoutingSlipFaulted routingSlipFaulted = new RoutingSlipFaultedMessage(_execution.TrackingNumber, faultedTimestamp,
                     faultedDuration, Enumerable.Repeat(_activityException, 1), _routingSlip.Variables);
-                _execution.Bus.Publish(routingSlipFaulted);
+                publisher.Publish(_execution.Bus, routingSlipFaulted);
             }
         }
 

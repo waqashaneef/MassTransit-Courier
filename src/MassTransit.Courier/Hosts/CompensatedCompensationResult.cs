@@ -38,18 +38,21 @@ namespace MassTransit.Courier.Hosts
 
         public void Evaluate()
         {
+            RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
+
+            Build(builder);
+
+            RoutingSlip routingSlip = builder.Build();
+
+            IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(routingSlip);
+
             RoutingSlipActivityCompensated activityCompensated = new RoutingSlipActivityCompensatedMessage(_compensation.Host,
                 _compensation.TrackingNumber, _compensation.ActivityName, _compensation.ActivityTrackingNumber, _compensation.Timestamp,
                 _duration, _compensateLog.Data, _routingSlip.Variables);
-            _compensation.Bus.Publish(activityCompensated);
+            publisher.Publish(_compensation.Bus, activityCompensated);
 
-            if (HasMoreCompensations())
+            if (HasMoreCompensations(routingSlip))
             {
-                RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
-
-                Build(builder);
-
-                RoutingSlip routingSlip = builder.Build();
 
                 IEndpoint endpoint = _compensation.Bus.GetEndpoint(routingSlip.GetNextCompensateAddress());
                 endpoint.Forward(_compensation.ConsumeContext, routingSlip);
@@ -61,13 +64,13 @@ namespace MassTransit.Courier.Hosts
 
                 RoutingSlipFaulted routingSlipFaulted = new RoutingSlipFaultedMessage(_compensation.TrackingNumber, faultedTimestamp,
                     faultedDuration, _routingSlip.ActivityExceptions, _routingSlip.Variables);
-                _compensation.Bus.Publish(routingSlipFaulted);
+                publisher.Publish(_compensation.Bus, routingSlipFaulted);
             }
         }
 
-        bool HasMoreCompensations()
+        bool HasMoreCompensations(RoutingSlip routingSlip)
         {
-            return _routingSlip.CompensateLogs != null && _routingSlip.CompensateLogs.Count > 1;
+            return routingSlip.CompensateLogs != null && routingSlip.CompensateLogs.Count > 0;
         }
 
         protected virtual void Build(RoutingSlipBuilder builder)

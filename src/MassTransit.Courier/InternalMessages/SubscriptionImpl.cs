@@ -10,28 +10,24 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.Courier.Serialization
+namespace MassTransit.Courier.InternalMessages
 {
-    using Newtonsoft.Json.Linq;
+    using System;
+    using Contracts;
 
 
-    /// <summary>
-    /// Default conversion of properties using standard serialization approach
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class DefaultJsonTypeConverter<T> :
-        JsonTypeConverter<T>
-        where T : class
+    public class SubscriptionImpl :
+        Subscription
     {
-        public T Convert(JToken token)
+        public SubscriptionImpl(Uri address, RoutingSlipEvents events, RoutingSlipEventContents include)
         {
-            if (token.Type == JTokenType.Null)
-                token = new JObject();
-
-            using (var jsonReader = new JTokenReader(token))
-            {
-                return (T)SerializerCache.Deserializer.Deserialize(jsonReader, typeof(T));
-            }
+            Include = include;
+            Address = address;
+            Events = events;
         }
+
+        public Uri Address { get; private set; }
+        public RoutingSlipEvents Events { get; private set; }
+        public RoutingSlipEventContents Include { get; private set; }
     }
 }

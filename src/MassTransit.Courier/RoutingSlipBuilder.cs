@@ -37,6 +37,7 @@ namespace MassTransit.Courier
         readonly List<Activity> _sourceItinerary;
         readonly Guid _trackingNumber;
         readonly IDictionary<string, object> _variables;
+        IList<Subscription> _subscriptions;
 
         public RoutingSlipBuilder(Guid trackingNumber)
         {
@@ -49,6 +50,7 @@ namespace MassTransit.Courier
             _activityExceptions = new List<ActivityException>();
             _compensateLogs = new List<CompensateLog>();
             _variables = new Dictionary<string, object>();
+            _subscriptions = new List<Subscription>();
         }
 
         public RoutingSlipBuilder(RoutingSlip routingSlip, Func<IEnumerable<Activity>, IEnumerable<Activity>> activitySelector)
@@ -60,11 +62,13 @@ namespace MassTransit.Courier
             _compensateLogs = new List<CompensateLog>(routingSlip.CompensateLogs);
             _activityExceptions = new List<ActivityException>(routingSlip.ActivityExceptions);
             _variables = new Dictionary<string, object>(routingSlip.Variables);
+            _subscriptions = new List<Subscription>(routingSlip.Subscriptions);
 
             _sourceItinerary = new List<Activity>();
         }
 
-        public RoutingSlipBuilder(RoutingSlip routingSlip, Func<IEnumerable<CompensateLog>, IEnumerable<CompensateLog>> compensateLogSelector)
+        public RoutingSlipBuilder(RoutingSlip routingSlip,
+            Func<IEnumerable<CompensateLog>, IEnumerable<CompensateLog>> compensateLogSelector)
         {
             _trackingNumber = routingSlip.TrackingNumber;
             _createTimestamp = routingSlip.CreateTimestamp;
@@ -73,13 +77,9 @@ namespace MassTransit.Courier
             _compensateLogs = new List<CompensateLog>(compensateLogSelector(routingSlip.CompensateLogs));
             _activityExceptions = new List<ActivityException>(routingSlip.ActivityExceptions);
             _variables = new Dictionary<string, object>(routingSlip.Variables);
+            _subscriptions = new List<Subscription>(routingSlip.Subscriptions);
 
             _sourceItinerary = new List<Activity>();
-        }
-
-        public IDictionary<string, object> Variables
-        {
-            get { return _variables; }
         }
 
         /// <summary>
@@ -184,7 +184,7 @@ namespace MassTransit.Courier
         public RoutingSlip Build()
         {
             return new RoutingSlipImpl(_trackingNumber, _createTimestamp, _itinerary, _activityLogs, _compensateLogs, _activityExceptions,
-                _variables);
+                _variables, _subscriptions);
         }
 
         /// <summary>
@@ -290,6 +290,17 @@ namespace MassTransit.Courier
             IDictionary<string, object> dictionary = Statics.Converter.Convert(values);
 
             return dictionary.ToDictionary(x => x.Key, x => x.Value);
+        }
+
+
+        /// <summary>
+        /// Add an explicit subscription to the routing slip events
+        /// </summary>
+        /// <param name="address">The destination address where the events are sent</param>
+        /// <param name="events">The events to include in the subscription</param>
+        public void AddSubscription(Uri address, RoutingSlipEvents events)
+        {
+            _subscriptions.Add(new SubscriptionImpl(address, events, RoutingSlipEventContents.All));
         }
 
 

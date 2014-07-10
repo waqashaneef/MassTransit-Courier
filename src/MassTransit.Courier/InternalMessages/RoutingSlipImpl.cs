@@ -22,8 +22,8 @@ namespace MassTransit.Courier.InternalMessages
         RoutingSlip
     {
         public RoutingSlipImpl(Guid trackingNumber, DateTime createTimestamp, IEnumerable<Activity> activities,
-            IEnumerable<ActivityLog> activityLogs, IEnumerable<CompensateLog> compensateLogs,
-            IEnumerable<ActivityException> exceptions, IDictionary<string, object> variables)
+            IEnumerable<ActivityLog> activityLogs, IEnumerable<CompensateLog> compensateLogs, IEnumerable<ActivityException> exceptions,
+            IDictionary<string, object> variables, IEnumerable<Subscription> subscriptions)
         {
             TrackingNumber = trackingNumber;
             CreateTimestamp = createTimestamp;
@@ -32,6 +32,7 @@ namespace MassTransit.Courier.InternalMessages
             CompensateLogs = compensateLogs.ToList();
             Variables = variables ?? new Dictionary<string, object>();
             ActivityExceptions = exceptions.ToList();
+            Subscriptions = subscriptions.ToList();
         }
 
 
@@ -42,5 +43,6 @@ namespace MassTransit.Courier.InternalMessages
         public IList<CompensateLog> CompensateLogs { get; private set; }
         public IDictionary<string, object> Variables { get; private set; }
         public IList<ActivityException> ActivityExceptions { get; private set; }
+        public IList<Subscription> Subscriptions { get; private set; }
     }
 }

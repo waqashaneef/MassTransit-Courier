@@ -13,9 +13,12 @@
 namespace MassTransit.Courier
 {
     using System;
+    using System.IO;
     using System.Linq;
+    using System.Text;
     using Contracts;
     using InternalMessages;
+    using Newtonsoft.Json;
 
 
     public static class RoutingSlipExtensions
@@ -62,14 +65,39 @@ namespace MassTransit.Courier
                 DateTime timestamp = DateTime.UtcNow;
                 TimeSpan duration = timestamp - routingSlip.CreateTimestamp;
 
-                bus.Publish<RoutingSlipCompleted>(new RoutingSlipCompletedMessage(routingSlip.TrackingNumber, timestamp, duration,
-                    routingSlip.Variables));
+                IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(routingSlip);
+
+                publisher.Publish(bus,
+                    new RoutingSlipCompletedMessage(routingSlip.TrackingNumber, timestamp, duration, routingSlip.Variables));
             }
             else
             {
                 IEndpoint endpoint = bus.GetEndpoint(routingSlip.GetNextExecuteAddress());
 
                 endpoint.Send(routingSlip, x => x.SetSourceAddress(bus.Endpoint.Address.Uri));
+            }
+        }
+
+        public static string ToJsonString(this RoutingSlip routingSlip)
+        {
+            using (var stream = new MemoryStream())
+            using (var writer = new StreamWriter(stream))
+            {
+                SerializerCache.Serializer.Serialize(writer, routingSlip);
+
+                writer.Flush();
+
+                return Encoding.UTF8.GetString(stream.ToArray());
+            }
+        }
+
+        public static RoutingSlip GetRoutingSlip(string json)
+        {
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(json)))
+            using (var writer = new StreamReader(stream))
+            using (var reader = new JsonTextReader(writer))
+            {
+                return SerializerCache.Deserializer.Deserialize<RoutingSlip>(reader);
             }
         }
     }

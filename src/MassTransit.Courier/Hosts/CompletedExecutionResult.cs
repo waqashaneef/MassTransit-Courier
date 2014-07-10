@@ -66,17 +66,19 @@ namespace MassTransit.Courier.Hosts
 
         public void Evaluate()
         {
-            RoutingSlipActivityCompleted message = new RoutingSlipActivityCompletedMessage(_execution.Host, _routingSlip.TrackingNumber,
-                _activity.Name, _execution.ActivityTrackingNumber, _execution.Timestamp, _duration, _data,
-                _routingSlip.Variables, _activity.Arguments);
-
-            _execution.Bus.Publish(message);
-
             RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
 
             Build(builder);
 
             RoutingSlip routingSlip = builder.Build();
+
+            IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(routingSlip);
+
+            RoutingSlipActivityCompleted message = new RoutingSlipActivityCompletedMessage(_execution.Host, _execution.TrackingNumber,
+                _execution.ActivityName, _execution.ActivityTrackingNumber, _execution.Timestamp, _duration, _data,
+                routingSlip.Variables, _activity.Arguments);
+
+            publisher.Publish(_execution.Bus, message);
 
             if (HasNextActivity(routingSlip))
             {
@@ -90,7 +92,7 @@ namespace MassTransit.Courier.Hosts
 
                 RoutingSlipCompleted completedEvent = new RoutingSlipCompletedMessage(_routingSlip.TrackingNumber, completedTimestamp,
                     completedDuration, routingSlip.Variables);
-                _execution.Bus.Publish(completedEvent);
+                publisher.Publish(_execution.Bus, completedEvent);
             }
         }
 

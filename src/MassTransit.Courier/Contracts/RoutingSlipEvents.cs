@@ -15,25 +15,16 @@ namespace MassTransit.Courier.Contracts
     using System;
 
 
-    /// <summary>
-    /// A routing slip subscription defines a specific endpoint where routing
-    /// slip events should be sent (not published). If specified, events are not published.
-    /// </summary>
-    public interface Subscription
+    [Flags]
+    public enum RoutingSlipEvents
     {
-        /// <summary>
-        /// The address where events should be sent
-        /// </summary>
-        Uri Address { get; }
-
-        /// <summary>
-        /// The events that are subscribed
-        /// </summary>
-        RoutingSlipEvents Events { get; }
-
-        /// <summary>
-        /// The event contents to include when published
-        /// </summary>
-        RoutingSlipEventContents Include { get; }
+        All = 0,
+        Completed = 0x0001,
+        Faulted = 0x0002,
+        CompensationFailed = 0x0004,
+        ActivityCompleted = 0x0010,
+        ActivityFaulted = 0x0020,
+        ActivityCompensated = 0x0040,
+        ActivityCompensationFailed = 0x0080,
     }
 }

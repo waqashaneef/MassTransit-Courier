@@ -15,11 +15,9 @@ namespace MassTransit.Courier.Tests
     namespace EncryptedArgument_Specs
     {
         using System;
-        using System.IO;
         using System.Security.Cryptography;
         using System.Text;
         using Contracts;
-        using MassTransit.Serialization;
         using NUnit.Framework;
 
 
@@ -49,15 +47,7 @@ namespace MassTransit.Courier.Tests
 
                         RoutingSlip routingSlip = builder.Build();
 
-                        using(var stream = new MemoryStream())
-                        using (var writer = new StreamWriter(stream))
-                        {
-                            JsonMessageSerializer.Serializer.Serialize(writer, routingSlip);
-
-                            writer.Flush();
-
-                            Console.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
-                        }
+                        Console.WriteLine(routingSlip.ToJsonString());
                     }
                 }
             }

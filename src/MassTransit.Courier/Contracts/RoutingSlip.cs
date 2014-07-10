@@ -57,5 +57,10 @@ namespace MassTransit.Courier.Contracts
         /// A list of exceptions that have occurred during routing slip execution
         /// </summary>
         IList<ActivityException> ActivityExceptions { get; }
+
+        /// <summary>
+        /// Subscriptions to routing slip events
+        /// </summary>
+        IList<Subscription> Subscriptions { get; } 
     }
 }

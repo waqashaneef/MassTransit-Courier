@@ -60,12 +60,14 @@
     <Compile Include="Contracts\ActivityException.cs" />
     <Compile Include="Contracts\ActivityHost.cs" />
     <Compile Include="Contracts\CompensateLog.cs" />
+    <Compile Include="Contracts\RoutingSlipEventContents.cs" />
     <Compile Include="Contracts\ExceptionInfo.cs" />
     <Compile Include="Contracts\RoutingSlipActivityCompensated.cs" />
     <Compile Include="Contracts\RoutingSlipActivityCompensationFailed.cs" />
     <Compile Include="Contracts\RoutingSlipActivityCompleted.cs" />
     <Compile Include="Contracts\RoutingSlipActivityFaulted.cs" />
     <Compile Include="Contracts\RoutingSlipCompensationFailed.cs" />
+    <Compile Include="Contracts\RoutingSlipEvents.cs" />
     <Compile Include="Contracts\Subscription.cs" />
     <Compile Include="Hosts\CompensatedCompensationResult.cs" />
     <Compile Include="Hosts\CompensatedWithVariablesCompensationResult.cs" />
@@ -80,7 +82,6 @@
     <Compile Include="Hosts\GenericActivityFactory.cs" />
     <Compile Include="Hosts\NextActivityExecutionResult.cs" />
     <Compile Include="Hosts\NextActivityWithVariablesExecutionResult.cs" />
-    <Compile Include="Hosts\RanToCompletionResult.cs" />
     <Compile Include="ActivityFactory.cs" />
     <Compile Include="CompensateActivityFactory.cs" />
     <Compile Include="ExecuteActivityFactory.cs" />
@@ -93,12 +94,16 @@
     <Compile Include="InternalMessages\ExceptionInfoImpl.cs" />
     <Compile Include="InternalMessages\HostImpl.cs" />
     <Compile Include="InternalMessages\RoutingSlipImpl.cs" />
+    <Compile Include="InternalMessages\SubscriptionImpl.cs" />
     <Compile Include="Internals\**\*.cs" />
+    <Compile Include="IRoutingSlipEventPublisher.cs" />
     <Compile Include="ItineraryBuilder.cs" />
     <Compile Include="RoutingSlipEventExtensions.cs" />
+    <Compile Include="RoutingSlipEventPublisher.cs" />
     <Compile Include="Serialization\DefaultJsonTypeConverter.cs" />
     <Compile Include="Serialization\JsonTypeConverter.cs" />
     <Compile Include="Serialization\JsonExtensions.cs" />
+    <Compile Include="SerializerCache.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\SolutionVersion.cs">

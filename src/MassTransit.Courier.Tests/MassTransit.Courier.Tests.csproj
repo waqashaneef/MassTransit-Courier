@@ -80,6 +80,7 @@
     <Compile Include="EndpointCacheProxy.cs" />
     <Compile Include="ReviseItinerary_Specs.cs" />
     <Compile Include="SingleActivityEvent_Specs.cs" />
+    <Compile Include="Subscription_Specs.cs" />
     <Compile Include="Testing\FaultyActivity.cs" />
     <Compile Include="Testing\FaultyArguments.cs" />
     <Compile Include="Testing\FaultyCompensateActivity.cs" />

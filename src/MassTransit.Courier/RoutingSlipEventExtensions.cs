@@ -160,7 +160,7 @@ namespace MassTransit.Courier
                 token = new JObject();
 
             using (var jsonReader = new JTokenReader(token))
-                return (T)JsonMessageSerializer.Deserializer.Deserialize(jsonReader, typeof(T));
+                return (T)SerializerCache.Deserializer.Deserialize(jsonReader, typeof(T));
         }
     }
 }

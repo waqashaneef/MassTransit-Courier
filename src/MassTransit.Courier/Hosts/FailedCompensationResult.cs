@@ -42,10 +42,12 @@ namespace MassTransit.Courier.Hosts
             DateTime faultedTimestamp = _compensation.Timestamp + _duration;
             TimeSpan faultedDuration = faultedTimestamp - _routingSlip.CreateTimestamp;
 
+            IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(_routingSlip);
+
             RoutingSlipActivityCompensationFailed activityCompensationFailed = new CompensationFailedMessage(_compensation.Host,
                 _compensation.TrackingNumber, _compensation.ActivityName, _compensation.ActivityTrackingNumber, _compensation.Timestamp,
                 _duration, faultedTimestamp, faultedDuration, _compensateLog.Data, _routingSlip.Variables, _exception);
-            _compensation.Bus.Publish(activityCompensationFailed);
+            publisher.Publish(_compensation.Bus, activityCompensationFailed);
         }
     }
 }
