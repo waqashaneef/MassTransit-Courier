@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -10,25 +10,33 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.Courier.Tests.Testing
+namespace MassTransit.Courier
 {
     using System;
-    using System.Threading.Tasks;
+    using System.Runtime.Serialization;
 
 
-    public class ReviseToEmptyItineraryActivity :
-        Activity<TestArguments, TestLog>
+    [Serializable]
+    public class ActivityExecutionException :
+        CourierException
     {
-        public async Task<ExecutionResult> Execute(Execution<TestArguments> execution)
+        public ActivityExecutionException()
         {
-            Console.WriteLine("ReviseToEmptyItineraryActivity: Execute: {0}", execution.Arguments.Value);
-
-            return execution.ReviseItinerary(x => { });
         }
 
-        public async Task<CompensationResult> Compensate(Compensation<TestLog> compensation)
+        public ActivityExecutionException(string message)
+            : base(message)
         {
-            return compensation.Compensated();
+        }
+
+        public ActivityExecutionException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        protected ActivityExecutionException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
         }
     }
 }

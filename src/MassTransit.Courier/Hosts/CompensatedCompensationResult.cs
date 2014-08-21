@@ -14,6 +14,7 @@ namespace MassTransit.Courier.Hosts
 {
     using System;
     using System.Collections.Generic;
+    using System.Threading.Tasks;
     using Contracts;
     using Extensions;
     using InternalMessages;
@@ -33,10 +34,10 @@ namespace MassTransit.Courier.Hosts
             _compensation = compensation;
             _compensateLog = compensateLog;
             _routingSlip = routingSlip;
-            _duration = _compensation.Elapsed;
+            _duration = _compensation.ElapsedTime;
         }
 
-        public void Evaluate()
+        public async Task Evaluate()
         {
             RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
 
@@ -47,7 +48,7 @@ namespace MassTransit.Courier.Hosts
             IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(routingSlip);
 
             RoutingSlipActivityCompensated activityCompensated = new RoutingSlipActivityCompensatedMessage(_compensation.Host,
-                _compensation.TrackingNumber, _compensation.ActivityName, _compensation.ActivityTrackingNumber, _compensation.Timestamp,
+                _compensation.TrackingNumber, _compensation.ActivityName, _compensation.ActivityTrackingNumber, _compensation.StartTimestamp,
                 _duration, _compensateLog.Data, _routingSlip.Variables);
             publisher.Publish(_compensation.Bus, activityCompensated);
 
@@ -59,7 +60,7 @@ namespace MassTransit.Courier.Hosts
             }
             else
             {
-                DateTime faultedTimestamp = _compensation.Timestamp + _duration;
+                DateTime faultedTimestamp = _compensation.StartTimestamp + _duration;
                 TimeSpan faultedDuration = faultedTimestamp - _routingSlip.CreateTimestamp;
 
                 RoutingSlipFaulted routingSlipFaulted = new RoutingSlipFaultedMessage(_compensation.TrackingNumber, faultedTimestamp,

@@ -109,6 +109,9 @@ namespace MassTransit.Courier.Hosts
             if (log == null)
                 throw new ArgumentNullException("log");
 
+            if (_compensationAddress == null)
+                throw new InvalidCompensationAddressException(_compensationAddress);
+
             return new NextActivityExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log);
         }
 
@@ -137,6 +140,9 @@ namespace MassTransit.Courier.Hosts
             if (variables == null)
                 throw new ArgumentNullException("variables");
 
+            if (_compensationAddress == null)
+                throw new InvalidCompensationAddressException(_compensationAddress);
+
             return new NextActivityWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
                 RoutingSlipBuilder.GetObjectAsDictionary(variables));
         }
@@ -147,6 +153,9 @@ namespace MassTransit.Courier.Hosts
                 throw new ArgumentNullException("log");
             if (variables == null)
                 throw new ArgumentNullException("variables");
+
+            if (_compensationAddress == null)
+                throw new InvalidCompensationAddressException(_compensationAddress);
 
             return new NextActivityWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
                 variables.ToDictionary(x => x.Key, x => x.Value));
@@ -167,8 +176,9 @@ namespace MassTransit.Courier.Hosts
                 throw new ArgumentNullException("log");
             if (buildItinerary == null)
                 throw new ArgumentNullException("buildItinerary");
+
             if (_compensationAddress == null)
-                throw new RoutingSlipException("The activity does not have a compensation address");
+                throw new InvalidCompensationAddressException(_compensationAddress);
 
             return new ReviseItineraryExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress, log,
                 buildItinerary);
@@ -183,8 +193,9 @@ namespace MassTransit.Courier.Hosts
                 throw new ArgumentNullException("variables");
             if (buildItinerary == null)
                 throw new ArgumentNullException("buildItinerary");
+
             if (_compensationAddress == null)
-                throw new RoutingSlipException("The activity does not have a compensation address");
+                throw new InvalidCompensationAddressException(_compensationAddress);
 
             return new ReviseItineraryWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress,
                 log, RoutingSlipBuilder.GetObjectAsDictionary(variables), buildItinerary);
@@ -200,8 +211,9 @@ namespace MassTransit.Courier.Hosts
                 throw new ArgumentNullException("variables");
             if (buildItinerary == null)
                 throw new ArgumentNullException("buildItinerary");
+
             if (_compensationAddress == null)
-                throw new RoutingSlipException("The activity does not have a compensation address");
+                throw new InvalidCompensationAddressException(_compensationAddress);
 
             return new ReviseItineraryWithVariablesExecutionResult<TArguments, TLog>(this, _activity, _routingSlip, _compensationAddress,
                 log, variables.ToDictionary(x => x.Key, x => x.Value), buildItinerary);
@@ -209,7 +221,7 @@ namespace MassTransit.Courier.Hosts
 
         ExecutionResult Execution<TArguments>.Faulted()
         {
-            return Faulted(new RoutingSlipException("The routing slip execution failed"));
+            return Faulted(new ActivityExecutionFaultedException());
         }
 
         ExecutionResult Execution<TArguments>.Faulted(Exception exception)

@@ -30,7 +30,7 @@ namespace MassTransit.Courier.Contracts
         DateTime Timestamp { get; }
 
         /// <summary>
-        /// The time from when the routing slip was created until the completion
+        /// The time from when the routing slip was created until the exception occurred
         /// </summary>
         TimeSpan Duration { get; }
 

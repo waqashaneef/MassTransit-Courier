@@ -58,7 +58,7 @@
     <Compile Include="ActivityFactoryExtensions.cs" />
     <Compile Include="Argument.cs" />
     <Compile Include="Contracts\ActivityException.cs" />
-    <Compile Include="Contracts\ActivityHost.cs" />
+    <Compile Include="Contracts\Host.cs" />
     <Compile Include="Contracts\CompensateLog.cs" />
     <Compile Include="Contracts\RoutingSlipEventContents.cs" />
     <Compile Include="Contracts\ExceptionInfo.cs" />
@@ -69,6 +69,10 @@
     <Compile Include="Contracts\RoutingSlipCompensationFailed.cs" />
     <Compile Include="Contracts\RoutingSlipEvents.cs" />
     <Compile Include="Contracts\Subscription.cs" />
+    <Compile Include="Exceptions\ActivityExecutionException.cs" />
+    <Compile Include="Exceptions\ActivityExecutionFaultedException.cs" />
+    <Compile Include="Exceptions\CourierException.cs" />
+    <Compile Include="Exceptions\InvalidCompensationAddressException.cs" />
     <Compile Include="Hosts\CompensatedCompensationResult.cs" />
     <Compile Include="Hosts\CompensatedWithVariablesCompensationResult.cs" />
     <Compile Include="Hosts\DefaultConstructorActivityFactory.cs" />

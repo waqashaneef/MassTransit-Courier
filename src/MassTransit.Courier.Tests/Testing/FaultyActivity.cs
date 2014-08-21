@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -13,12 +13,13 @@
 namespace MassTransit.Courier.Tests.Testing
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class FaultyActivity :
         Activity<FaultyArguments, FaultyLog>
     {
-        public ExecutionResult Execute(Execution<FaultyArguments> execution)
+        public async Task<ExecutionResult> Execute(Execution<FaultyArguments> execution)
         {
             Console.WriteLine("FaultyActivity: Execute");
             Console.WriteLine("FaultyActivity: About to blow this up!");
@@ -26,7 +27,7 @@ namespace MassTransit.Courier.Tests.Testing
             return execution.Faulted(new InvalidOperationException("Things that make you go boom!"));
         }
 
-        public CompensationResult Compensate(Compensation<FaultyLog> compensation)
+        public async Task<CompensationResult> Compensate(Compensation<FaultyLog> compensation)
         {
             return compensation.Compensated();
         }

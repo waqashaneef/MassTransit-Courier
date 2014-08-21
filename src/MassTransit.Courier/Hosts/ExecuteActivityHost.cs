@@ -13,6 +13,7 @@
 namespace MassTransit.Courier.Hosts
 {
     using System;
+    using System.Threading.Tasks;
     using Contracts;
     using InternalMessages;
     using Logging;
@@ -60,9 +61,10 @@ namespace MassTransit.Courier.Hosts
 
             try
             {
-                ExecutionResult result = ExecuteActivity(execution);
+                // TODO async MT support
+                ExecutionResult result = ExecuteActivity(execution).Result;
 
-                result.Evaluate();
+                result.Evaluate().Wait();
             }
             catch (Exception ex)
             {
@@ -70,11 +72,11 @@ namespace MassTransit.Courier.Hosts
             }
         }
 
-        ExecutionResult ExecuteActivity(Execution<TArguments> execution)
+        async Task<ExecutionResult> ExecuteActivity(Execution<TArguments> execution)
         {
             try
             {
-                return _activityFactory.ExecuteActivity(execution);
+                return await _activityFactory.ExecuteActivity(execution);
             }
             catch (Exception ex)
             {
@@ -89,9 +91,9 @@ namespace MassTransit.Courier.Hosts
             public Uri Address { get; private set; }
             readonly Host _host;
 
-            public string RoutingSlipVersion
+            public string CourierVersion
             {
-                get { return _host.RoutingSlipVersion; }
+                get { return _host.CourierVersion; }
             }
 
             public string OsVersion

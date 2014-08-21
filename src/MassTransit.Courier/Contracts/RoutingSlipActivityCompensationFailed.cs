@@ -61,7 +61,7 @@ namespace MassTransit.Courier.Contracts
         IDictionary<string, object> Variables { get; }
 
         /// <summary>
-        /// The exception information from the faulting activity
+        /// The exception information from the faulting compensation
         /// </summary>
         ExceptionInfo ExceptionInfo { get; }
     }

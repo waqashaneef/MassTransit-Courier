@@ -1,4 +1,4 @@
-// Copyright 2007-2013 Chris Patterson
+// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -13,6 +13,7 @@
 namespace MassTransit.Courier.Hosts
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class FactoryMethodExecuteActivityFactory<TActivity, TArguments> :
@@ -27,7 +28,7 @@ namespace MassTransit.Courier.Hosts
             _executeFactory = executeFactory;
         }
 
-        public ExecutionResult ExecuteActivity(Execution<TArguments> execution)
+        public Task<ExecutionResult> ExecuteActivity(Execution<TArguments> execution)
         {
             TActivity activity = _executeFactory(execution.Arguments);
 

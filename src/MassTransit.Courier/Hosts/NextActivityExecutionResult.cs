@@ -33,14 +33,12 @@ namespace MassTransit.Courier.Hosts
         where TLog : class
     {
         readonly Uri _compensationAddress;
-        readonly TLog _log;
 
         public NextActivityExecutionResult(Execution<TArguments> execution, Activity activity, RoutingSlip routingSlip,
             Uri compensationAddress, TLog log)
             : base(execution, activity, routingSlip, RoutingSlipBuilder.GetObjectAsDictionary(log))
         {
             _compensationAddress = compensationAddress;
-            _log = log;
         }
 
         protected override void Build(RoutingSlipBuilder builder)

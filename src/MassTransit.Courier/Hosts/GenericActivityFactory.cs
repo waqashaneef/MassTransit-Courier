@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -12,8 +12,11 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Courier.Hosts
 {
+    using System.Threading.Tasks;
+
+
     public class GenericActivityFactory<TActivity, TArguments, TLog> :
-        ActivityFactory<TActivity, TArguments, TLog>
+        ActivityFactory<TArguments, TLog>
         where TActivity : ExecuteActivity<TArguments>, CompensateActivity<TLog>
         where TArguments : class
         where TLog : class
@@ -25,12 +28,12 @@ namespace MassTransit.Courier.Hosts
             _activityFactory = activityFactory;
         }
 
-        public ExecutionResult ExecuteActivity(Execution<TArguments> execution)
+        public Task<ExecutionResult> ExecuteActivity(Execution<TArguments> execution)
         {
             return _activityFactory.ExecuteActivity<TActivity, TArguments>(execution);
         }
 
-        public CompensationResult CompensateActivity(Compensation<TLog> compensation)
+        public Task<CompensationResult> CompensateActivity(Compensation<TLog> compensation)
         {
             return _activityFactory.CompensateActivity<TActivity, TLog>(compensation);
         }

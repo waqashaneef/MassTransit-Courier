@@ -29,7 +29,7 @@ namespace MassTransit.Courier.MongoDbIntegration.Documents
             MassTransitVersion = host.MassTransitVersion;
             OsVersion = host.OsVersion;
             Address = host.Address;
-            RoutingSlipVersion = host.RoutingSlipVersion;
+            RoutingSlipVersion = host.CourierVersion;
         }
 
         public string MachineName { get; set; }

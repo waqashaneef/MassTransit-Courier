@@ -13,19 +13,20 @@
 namespace MassTransit.Courier.Tests.Testing
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class ReviseWithNoChangeItineraryActivity :
         Activity<TestArguments, TestLog>
     {
-        public ExecutionResult Execute(Execution<TestArguments> execution)
+        public async Task<ExecutionResult> Execute(Execution<TestArguments> execution)
         {
             Console.WriteLine("ReviseWithNoChangeItineraryActivity: Execute: {0}", execution.Arguments.Value);
 
             return execution.ReviseItinerary(x => x.AddSourceItinerary());
         }
 
-        public CompensationResult Compensate(Compensation<TestLog> compensation)
+        public async Task<CompensationResult> Compensate(Compensation<TestLog> compensation)
         {
             return compensation.Compensated();
         }

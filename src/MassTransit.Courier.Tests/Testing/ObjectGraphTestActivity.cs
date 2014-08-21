@@ -13,6 +13,7 @@
 namespace MassTransit.Courier.Tests.Testing
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class ObjectGraphTestActivity :
@@ -31,7 +32,7 @@ namespace MassTransit.Courier.Tests.Testing
             _names = names;
         }
 
-        public ExecutionResult Execute(Execution<ObjectGraphActivityArguments> execution)
+        public async Task<ExecutionResult> Execute(Execution<ObjectGraphActivityArguments> execution)
         {
             int intValue = execution.Arguments.Outer.IntValue;
             string stringValue = execution.Arguments.Outer.StringValue;
@@ -53,7 +54,7 @@ namespace MassTransit.Courier.Tests.Testing
             return execution.Completed(log);
         }
 
-        public CompensationResult Compensate(Compensation<TestLog> compensation)
+        public async Task<CompensationResult> Compensate(Compensation<TestLog> compensation)
         {
             Console.WriteLine("TestActivity: Compensate original value: {0}", compensation.Log.OriginalValue);
 

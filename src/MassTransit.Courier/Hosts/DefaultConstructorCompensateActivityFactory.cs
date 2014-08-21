@@ -22,7 +22,7 @@ namespace MassTransit.Courier.Hosts
         }
 
 
-        class ActivityFactoryCache
+        static class ActivityFactoryCache
         {
             internal static readonly CompensateActivityFactory<TLog> Factory =
                 new FactoryMethodCompensateActivityFactory<TActivity, TLog>(_ => new TActivity());

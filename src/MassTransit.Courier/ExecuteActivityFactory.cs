@@ -12,9 +12,12 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Courier
 {
+    using System.Threading.Tasks;
+
+
     public interface ExecuteActivityFactory<in TArguments>
         where TArguments : class
     {
-        ExecutionResult ExecuteActivity(Execution<TArguments> execution);
+        Task<ExecutionResult> ExecuteActivity(Execution<TArguments> execution);
     }
 }

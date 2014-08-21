@@ -15,9 +15,15 @@ namespace MassTransit.Courier.Contracts
     using System;
 
 
+    /// <summary>
+    /// Specifies the specific contents of routing slip events to be included for a subscription
+    /// </summary>
     [Flags]
     public enum RoutingSlipEventContents
     {
+        /// <summary>
+        /// Include all event contents
+        /// </summary>
         All = 0,
 
         /// <summary>

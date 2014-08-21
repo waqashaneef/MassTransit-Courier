@@ -10,24 +10,33 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR 
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the 
 // specific language governing permissions and limitations under the License.
-namespace MassTransit.Courier.Contracts
+namespace MassTransit.Courier
 {
     using System;
+    using System.Runtime.Serialization;
 
 
-    public interface Host
+    [Serializable]
+    public class CourierException :
+        Exception
     {
-        string MachineName { get; }
-        string ProcessName { get; }
-        int ProcessId { get; }
-        string Assembly { get; }
-        string AssemblyVersion { get; }
-        string FrameworkVersion { get; }
-        string MassTransitVersion { get; }
-        string OsVersion { get; }
+        public CourierException()
+        {
+        }
 
-        Uri Address { get; }
+        public CourierException(string message)
+            : base(message)
+        {
+        }
 
-        string RoutingSlipVersion { get; }
+        public CourierException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        protected CourierException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
     }
 }

@@ -13,10 +13,11 @@
 namespace MassTransit.Courier.Hosts
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class FactoryMethodActivityFactory<TActivity, TArguments, TLog> :
-        ActivityFactory<TActivity,TArguments,TLog>
+        ActivityFactory<TArguments, TLog>
         where TActivity : ExecuteActivity<TArguments>, CompensateActivity<TLog>
         where TArguments : class
         where TLog : class
@@ -31,14 +32,14 @@ namespace MassTransit.Courier.Hosts
             _compensateFactory = compensateFactory;
         }
 
-        public CompensationResult CompensateActivity(Compensation<TLog> compensation)
+        public Task<CompensationResult> CompensateActivity(Compensation<TLog> compensation)
         {
             TActivity activity = _compensateFactory(compensation.Log);
 
             return activity.Compensate(compensation);
         }
 
-        public ExecutionResult ExecuteActivity(Execution<TArguments> execution)
+        public Task<ExecutionResult> ExecuteActivity(Execution<TArguments> execution)
         {
             TActivity activity = _executeFactory(execution.Arguments);
 

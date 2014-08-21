@@ -12,6 +12,9 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Courier
 {
+    using System.Threading.Tasks;
+
+
     /// <summary>
     /// Should be implemented by containers that support generic object resolution in order to 
     /// provide a common lifetime management policy for all activities
@@ -23,7 +26,7 @@ namespace MassTransit.Courier
         /// </summary>
         /// <param name="execution"></param>
         /// <returns></returns>
-        ExecutionResult ExecuteActivity<TActivity, TArguments>(Execution<TArguments> execution)
+        Task<ExecutionResult> ExecuteActivity<TActivity, TArguments>(Execution<TArguments> execution)
             where TActivity : ExecuteActivity<TArguments>
             where TArguments : class;
 
@@ -32,16 +35,15 @@ namespace MassTransit.Courier
         /// </summary>
         /// <param name="compensation"></param>
         /// <returns></returns>
-        CompensationResult CompensateActivity<TActivity, TLog>(Compensation<TLog> compensation)
+        Task<CompensationResult> CompensateActivity<TActivity, TLog>(Compensation<TLog> compensation)
             where TActivity : CompensateActivity<TLog>
             where TLog : class;
     }
 
 
-    public interface ActivityFactory<TActivity, in TArguments, in TLog> :
+    public interface ActivityFactory<in TArguments, in TLog> :
         ExecuteActivityFactory<TArguments>,
         CompensateActivityFactory<TLog>
-        where TActivity : ExecuteActivity<TArguments>, CompensateActivity<TLog>
         where TArguments : class
         where TLog : class
     {

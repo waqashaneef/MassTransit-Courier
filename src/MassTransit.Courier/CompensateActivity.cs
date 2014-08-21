@@ -12,6 +12,9 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Courier
 {
+    using System.Threading.Tasks;
+
+
     public interface CompensateActivity<in TLog>
         where TLog : class
     {
@@ -20,6 +23,6 @@ namespace MassTransit.Courier
         /// </summary>
         /// <param name="compensation">The compensation information for the activity</param>
         /// <returns></returns>
-        CompensationResult Compensate(Compensation<TLog> compensation);
+        Task<CompensationResult> Compensate(Compensation<TLog> compensation);
     }
 }

@@ -25,7 +25,7 @@ namespace MassTransit.Courier
         /// <typeparam name="TLog"></typeparam>
         /// <param name="activityFactory"></param>
         /// <returns></returns>
-        public static ActivityFactory<TActivity, TArguments, TLog> CreateActivityFactory<TActivity, TArguments, TLog>(
+        public static ActivityFactory<TArguments, TLog> CreateActivityFactory<TActivity, TArguments, TLog>(
             this ActivityFactory activityFactory)
             where TActivity : ExecuteActivity<TArguments>, CompensateActivity<TLog>
             where TArguments : class

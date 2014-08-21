@@ -13,19 +13,20 @@
 namespace MassTransit.Courier.Tests.Testing
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class SecondTestActivity :
         Activity<TestArguments, TestLog>
     {
-        public ExecutionResult Execute(Execution<TestArguments> execution)
+        public async Task<ExecutionResult> Execute(Execution<TestArguments> execution)
         {
             Console.WriteLine("SecondTestActivity: Execute: {0}", execution.Arguments.Value);
 
             return execution.Completed();
         }
 
-        public CompensationResult Compensate(Compensation<TestLog> compensation)
+        public async Task<CompensationResult> Compensate(Compensation<TestLog> compensation)
         {
             Console.WriteLine("SecondTestActivity: Compensate: {0}", compensation.Log.OriginalValue);
 

@@ -13,6 +13,7 @@
 namespace MassTransit.Courier.Hosts
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class FactoryMethodCompensateActivityFactory<TActivity, TLog> :
@@ -27,7 +28,7 @@ namespace MassTransit.Courier.Hosts
             _compensateFactory = compensateFactory;
         }
 
-        public CompensationResult CompensateActivity(Compensation<TLog> compensation)
+        public Task<CompensationResult> CompensateActivity(Compensation<TLog> compensation)
         {
             TActivity activity = _compensateFactory(compensation.Log);
 

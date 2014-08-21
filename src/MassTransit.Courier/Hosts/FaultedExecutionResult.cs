@@ -15,6 +15,7 @@ namespace MassTransit.Courier.Hosts
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using Contracts;
     using InternalMessages;
 
@@ -43,7 +44,7 @@ namespace MassTransit.Courier.Hosts
                 _execution.Timestamp, _duration, _exceptionInfo);
         }
 
-        public void Evaluate()
+        public async Task Evaluate()
         {
             IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(_routingSlip);
 

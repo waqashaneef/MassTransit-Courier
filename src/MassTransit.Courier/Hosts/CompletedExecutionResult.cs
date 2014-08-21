@@ -15,6 +15,7 @@ namespace MassTransit.Courier.Hosts
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Threading.Tasks;
     using Contracts;
     using InternalMessages;
 
@@ -64,7 +65,7 @@ namespace MassTransit.Courier.Hosts
             get { return _duration; }
         }
 
-        public void Evaluate()
+        public async Task Evaluate()
         {
             RoutingSlipBuilder builder = CreateRoutingSlipBuilder(_routingSlip);
 

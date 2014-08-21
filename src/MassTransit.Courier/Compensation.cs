@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -37,20 +37,30 @@ namespace MassTransit.Courier
         /// </summary>
         Host Host { get; }
 
-        DateTime Timestamp { get; }
+        /// <summary>
+        /// The start time for the activity compensation
+        /// </summary>
+        DateTime StartTimestamp { get; }
 
+        /// <summary>
+        /// The time elapsed for the compensation operation
+        /// </summary>
+        TimeSpan ElapsedTime { get; }
 
-        TimeSpan Elapsed { get; }
-
-
+        /// <summary>
+        /// The consume context of the compensation routing slip
+        /// </summary>
         IConsumeContext ConsumeContext { get; }
 
+        /// <summary>
+        /// The name of the activity being compensated
+        /// </summary>
         string ActivityName { get; }
+
         /// <summary>
         /// The tracking number for this activity within the routing slip
         /// </summary>
         Guid ActivityTrackingNumber { get; }
-
 
         /// <summary>
         /// The compensation was successful
@@ -68,9 +78,9 @@ namespace MassTransit.Courier
         /// <summary>
         /// The compensation was successful
         /// </summary>
-        /// <param name="values">The variables to be updated on the routing slip</param>
+        /// <param name="variables">The variables to be updated on the routing slip</param>
         /// <returns></returns>
-        CompensationResult Compensated(IDictionary<string, object> values);
+        CompensationResult Compensated(IDictionary<string, object> variables);
 
         /// <summary>
         /// The compensation failed

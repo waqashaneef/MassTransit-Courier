@@ -13,12 +13,13 @@
 namespace MassTransit.Courier.Tests.Testing
 {
     using System;
+    using System.Threading.Tasks;
 
 
     public class FaultyCompensateActivity :
         Activity<TestArguments, TestLog>
     {
-        public ExecutionResult Execute(Execution<TestArguments> execution)
+        public async Task<ExecutionResult> Execute(Execution<TestArguments> execution)
         {
             Console.WriteLine("FaultyCompensateActivity: Execute: {0}", execution.Arguments.Value);
 
@@ -27,7 +28,7 @@ namespace MassTransit.Courier.Tests.Testing
             return execution.Completed(log);
         }
 
-        public CompensationResult Compensate(Compensation<TestLog> compensation)
+        public async Task<CompensationResult> Compensate(Compensation<TestLog> compensation)
         {
             Console.WriteLine("FaultyCompensateActivity: Compensate: {0}", compensation.Log.OriginalValue);
 

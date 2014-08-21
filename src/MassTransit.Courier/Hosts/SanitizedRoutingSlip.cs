@@ -17,7 +17,6 @@ namespace MassTransit.Courier.Hosts
     using System.Linq;
     using System.Runtime.Serialization;
     using Contracts;
-    using MassTransit.Serialization;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
     using Serialization;
@@ -45,37 +44,33 @@ namespace MassTransit.Courier.Hosts
 
             Variables = routingSlip.Variables ?? GetEmptyObject();
 
-            Itinerary = (routingSlip.Itinerary ?? new List<Activity>())
+            Itinerary = (routingSlip.Itinerary ?? Enumerable.Empty<Activity>())
                 .Select(x => (Activity)new SanitizedActivity(x))
                 .ToList();
 
-            ActivityLogs = (routingSlip.ActivityLogs ?? new List<ActivityLog>())
+            ActivityLogs = (routingSlip.ActivityLogs ?? Enumerable.Empty<ActivityLog>())
                 .Select(x => (ActivityLog)new SanitizedActivityLog(x))
                 .ToList();
 
-            CompensateLogs = (routingSlip.CompensateLogs ?? new List<CompensateLog>())
+            CompensateLogs = (routingSlip.CompensateLogs ?? Enumerable.Empty<CompensateLog>())
                 .Select(x => (CompensateLog)new SanitizedCompensateLog(x))
                 .ToList();
 
-            ActivityExceptions = (routingSlip.ActivityExceptions ?? new List<ActivityException>())
+            ActivityExceptions = (routingSlip.ActivityExceptions ?? Enumerable.Empty<ActivityException>())
                 .Select(x => (ActivityException)new SanitizedActivityException(x))
                 .ToList();
 
-            Subscriptions = (routingSlip.Subscriptions ?? new List<Subscription>())
+            Subscriptions = (routingSlip.Subscriptions ?? Enumerable.Empty<Subscription>())
                 .Select(x => (Subscription)new SanitizedSubscription(x))
                 .ToList();
         }
 
 
         public Guid TrackingNumber { get; private set; }
-
         public DateTime CreateTimestamp { get; private set; }
-
         public IList<Activity> Itinerary { get; private set; }
         public IList<ActivityLog> ActivityLogs { get; private set; }
-
         public IList<CompensateLog> CompensateLogs { get; private set; }
-
         public IDictionary<string, object> Variables { get; private set; }
         public IList<ActivityException> ActivityExceptions { get; private set; }
         public IList<Subscription> Subscriptions { get; private set; }

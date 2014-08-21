@@ -1,4 +1,4 @@
-﻿// Copyright 2007-2013 Chris Patterson
+﻿// Copyright 2007-2014 Chris Patterson
 //  
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 // this file except in compliance with the License. You may obtain a copy of the 
@@ -17,24 +17,25 @@ namespace MassTransit.Courier
 
 
     [Serializable]
-    public class RoutingSlipException :
-        CourierException
+    public class ActivityExecutionFaultedException :
+        ActivityExecutionException
     {
-        public RoutingSlipException()
+        public ActivityExecutionFaultedException()
+            : this("The routing slip activity execution faulted with an unspecified exception")
         {
         }
 
-        public RoutingSlipException(string message)
+        public ActivityExecutionFaultedException(string message)
             : base(message)
         {
         }
 
-        public RoutingSlipException(string message, Exception innerException)
+        public ActivityExecutionFaultedException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
 
-        protected RoutingSlipException(SerializationInfo info, StreamingContext context)
+        protected ActivityExecutionFaultedException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }

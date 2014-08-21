@@ -13,6 +13,7 @@
 namespace MassTransit.Courier.Hosts
 {
     using System;
+    using System.Threading.Tasks;
     using Contracts;
     using InternalMessages;
 
@@ -34,18 +35,18 @@ namespace MassTransit.Courier.Hosts
             _compensateLog = compensateLog;
             _routingSlip = routingSlip;
             _exception = exception;
-            _duration = _compensation.Elapsed;
+            _duration = _compensation.ElapsedTime;
         }
 
-        public void Evaluate()
+        public async Task Evaluate()
         {
-            DateTime faultedTimestamp = _compensation.Timestamp + _duration;
+            DateTime faultedTimestamp = _compensation.StartTimestamp + _duration;
             TimeSpan faultedDuration = faultedTimestamp - _routingSlip.CreateTimestamp;
 
             IRoutingSlipEventPublisher publisher = new RoutingSlipEventPublisher(_routingSlip);
 
             RoutingSlipActivityCompensationFailed activityCompensationFailed = new CompensationFailedMessage(_compensation.Host,
-                _compensation.TrackingNumber, _compensation.ActivityName, _compensation.ActivityTrackingNumber, _compensation.Timestamp,
+                _compensation.TrackingNumber, _compensation.ActivityName, _compensation.ActivityTrackingNumber, _compensation.StartTimestamp,
                 _duration, faultedTimestamp, faultedDuration, _compensateLog.Data, _routingSlip.Variables, _exception);
             publisher.Publish(_compensation.Bus, activityCompensationFailed);
         }

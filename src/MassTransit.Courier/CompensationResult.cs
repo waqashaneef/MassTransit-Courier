@@ -12,8 +12,11 @@
 // specific language governing permissions and limitations under the License.
 namespace MassTransit.Courier
 {
+    using System.Threading.Tasks;
+
+
     public interface CompensationResult
     {
-        void Evaluate();
+        Task Evaluate();
     }
 }

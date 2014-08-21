@@ -45,14 +45,15 @@ namespace MassTransit.Courier.Hosts
             CompensationResult result;
             try
             {
-                result = _activityFactory.CompensateActivity(compensation);
+                // TODO: MassTransit Async Support
+                result = _activityFactory.CompensateActivity(compensation).Result;
             }
             catch (Exception ex)
             {
                 result = compensation.Failed(ex);
             }
 
-            result.Evaluate();
+            result.Evaluate().Wait();
         }
 
 
@@ -69,9 +70,9 @@ namespace MassTransit.Courier.Hosts
 
             public Uri Address { get; private set; }
 
-            public string RoutingSlipVersion
+            public string CourierVersion
             {
-                get { return _host.RoutingSlipVersion; }
+                get { return _host.CourierVersion; }
             }
 
             public string OsVersion

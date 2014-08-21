@@ -30,7 +30,7 @@ namespace MassTransit.Courier.Hosts
         readonly Host _host;
         readonly SanitizedRoutingSlip _routingSlip;
         readonly Stopwatch _timer;
-        readonly DateTime _timestamp;
+        readonly DateTime _startTimestamp;
 
         public HostCompensation(Host host, IConsumeContext<RoutingSlip> context)
         {
@@ -38,7 +38,7 @@ namespace MassTransit.Courier.Hosts
             _context = context;
 
             _timer = Stopwatch.StartNew();
-            _timestamp = DateTime.UtcNow;
+            _startTimestamp = DateTime.UtcNow;
 
             _routingSlip = new SanitizedRoutingSlip(context);
             if (_routingSlip.CompensateLogs.Count == 0)
@@ -76,12 +76,12 @@ namespace MassTransit.Courier.Hosts
             get { return _host; }
         }
 
-        public DateTime Timestamp
+        public DateTime StartTimestamp
         {
-            get { return _timestamp; }
+            get { return _startTimestamp; }
         }
 
-        public TimeSpan Elapsed
+        public TimeSpan ElapsedTime
         {
             get { return _timer.Elapsed; }
         }
@@ -115,12 +115,12 @@ namespace MassTransit.Courier.Hosts
                 RoutingSlipBuilder.GetObjectAsDictionary(values));
         }
 
-        CompensationResult Compensation<TLog>.Compensated(IDictionary<string, object> values)
+        CompensationResult Compensation<TLog>.Compensated(IDictionary<string, object> variables)
         {
-            if (values == null)
-                throw new ArgumentNullException("values");
+            if (variables == null)
+                throw new ArgumentNullException("variables");
 
-            return new CompensatedWithVariablesCompensationResult<TLog>(this, _compensateLog, _routingSlip, values);
+            return new CompensatedWithVariablesCompensationResult<TLog>(this, _compensateLog, _routingSlip, variables);
         }
 
         CompensationResult Compensation<TLog>.Failed()

@@ -30,7 +30,7 @@ namespace MassTransit.Courier.MongoDbIntegration.Tests.Events
         readonly string _osVersion;
         readonly int _processId;
         readonly string _processName;
-        readonly string _routingSlipVersion;
+        readonly string _courierVersion;
 
         public TestHost(Uri address)
         {
@@ -38,7 +38,7 @@ namespace MassTransit.Courier.MongoDbIntegration.Tests.Events
             _machineName = Environment.MachineName;
             _massTransitVersion = typeof(IServiceBus).Assembly.GetName().Version.ToString();
             _frameworkVersion = Environment.Version.ToString();
-            _routingSlipVersion = typeof(RoutingSlip).Assembly.GetName().Version.ToString();
+            _courierVersion = typeof(RoutingSlip).Assembly.GetName().Version.ToString();
             _osVersion = Environment.OSVersion.ToString();
             Process currentProcess = Process.GetCurrentProcess();
             _processId = currentProcess.Id;
@@ -98,9 +98,9 @@ namespace MassTransit.Courier.MongoDbIntegration.Tests.Events
             get { return _osVersion; }
         }
 
-        public string RoutingSlipVersion
+        public string CourierVersion
         {
-            get { return _routingSlipVersion; }
+            get { return _courierVersion; }
         }
     }
 }
